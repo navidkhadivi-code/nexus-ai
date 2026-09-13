@@ -5,6 +5,7 @@ import Chart, { type ChartPrefs } from './components/Chart';
 import { analyzeStructure } from './engine/structure';
 import { TIMEFRAMES, type Timeframe } from './api/binance';
 import { exportCsv } from './paper/engine';
+import { adminApi } from './api/adminClient';
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'];
 
@@ -510,20 +511,75 @@ function SettingsScreen({ s, lang }: any) {
 }
 
 function AdminScreen({ s, lang }: any) {
+  const [auth, setAuth] = useState<{ checked: boolean; authenticated: boolean; user?: string; setupRequired?: boolean; error?: string }>({ checked: false, authenticated: false });
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [audit, setAudit] = useState<any[]>([]);
+
+  useEffect(() => {
+    adminApi.session().then(r => {
+      if (r.error === 'backend-unavailable') setAuth({ checked: true, authenticated: false, error: 'backend-unavailable' });
+      else setAuth({ checked: true, authenticated: !!r.authenticated, user: r.user, setupRequired: !!r.setupRequired });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (auth.authenticated) adminApi.audit().then(r => setAudit(Array.isArray(r.lines) ? r.lines : []));
+  }, [auth.authenticated]);
+
+  const submit = async (setup: boolean) => {
+    setBusy(true);
+    const r = setup ? await adminApi.setup(u, p) : await adminApi.login(u, p);
+    setBusy(false);
+    if (r.ok) setAuth({ checked: true, authenticated: true, user: r.user });
+    else if (r.setupRequired) setAuth(a => ({ ...a, setupRequired: true }));
+    else alert(r.error ?? 'Failed');
+  };
+
+  if (!auth.checked) return <Panel title={t('admin', lang)}>…</Panel>;
+
+  if (auth.error === 'backend-unavailable') {
+    return <Panel title={t('admin', lang)}><div className="of-row warn">{t('authUnavailable', lang)}</div></Panel>;
+  }
+
+  if (!auth.authenticated) {
+    return (
+      <Panel title={t('adminLogin', lang)}>
+        {auth.setupRequired && <div className="of-row warn" style={{ marginBottom: 10 }}>{t('createAdminFirst', lang)}</div>}
+        <div className="set-grid" style={{ maxWidth: 460 }}>
+          <input className="inp" placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} autoComplete="username" />
+          <input className="inp" placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} autoComplete={auth.setupRequired ? 'new-password' : 'current-password'} />
+        </div>
+        <button className="btn primary" disabled={busy || u.length < 3 || p.length < 8} onClick={() => submit(!!auth.setupRequired)}>
+          {busy ? '…' : auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}
+        </button>
+        <div className="small muted note">Min 8 chars · 5 failed attempts ⇒ 15-min lockout · bcrypt · HttpOnly cookie</div>
+      </Panel>
+    );
+  }
+
   return (
     <div>
-      <Panel title={t('admin', lang)}>
+      <Panel title={`${t('admin', lang)} — ${auth.user}`}>
         <div className="admin-grid">
           <div><b>{t('agentCards', lang)} ({t('settings', lang)})</b>
             <div className="small">NOVA 15% · ORION 15% · LUMA 20% · ATLAS 15% · GANN 5% · MACRO 10% · QUANT 20% · ARES = VETO</div>
           </div>
           <div><b>{t('liveTradeDisabled', lang)}</b><div className="small">{t('liveWarn', lang)}</div></div>
           <div><b>{t('killSwitch', lang)}</b>
-            <div className="small">Audit: state={s.paper.killSwitch ? 'ACTIVE' : 'ARMED-OFF'} · journal {s.paper.journal.length} entries</div>
+            <div className="small">state={s.paper.killSwitch ? 'ACTIVE' : 'ARMED-OFF'} · journal {s.paper.journal.length} entries</div>
           </div>
         </div>
+        <div style={{ marginTop: 10 }}><button className="btn" onClick={async () => { await adminApi.logout(); setAuth({ checked: true, authenticated: false }); }}>{t('logout', lang)}</button></div>
       </Panel>
-      <Panel title="Audit Log">
+      <Panel title={t('auditLog', lang)}>
+        <div className="of-list">
+          {audit.map((l, i) => <div key={i} className="of-row mono">{l.ts} · {l.ip} · {l.action} · {l.user} {l.detail ? `· ${l.detail}` : ''}</div>)}
+          {!audit.length && <div className="empty">{t('noData', lang)}</div>}
+        </div>
+      </Panel>
+      <Panel title="Order Audit (PAPER)">
         <div className="of-list">
           {s.paper.orders.slice(0, 20).map((o: any) => <div key={o.id} className="of-row mono">{new Date(o.createdAt).toISOString()} PAPER {o.symbol} {o.side} {o.qty.toFixed(5)} @ {o.fillPrice?.toFixed(2)} fee={o.feePaid.toFixed(4)}</div>)}
         </div>

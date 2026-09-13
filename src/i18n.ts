@@ -104,6 +104,15 @@ const dict: Record<string, { en: string; fa: string }> = {
   time: { en: 'Time', fa: 'زمان' },
   close: { en: 'CLOSE', fa: 'بستن' },
   welcome: { en: 'Real market data by Binance public API. No fabricated numbers.', fa: 'داده واقعی بازار از API عمومی بایننس. بدون هیچ عدد ساختگی.' },
+  adminLogin: { en: 'ADMIN ACCESS', fa: 'دسترسی مدیریتی' },
+  username: { en: 'Username', fa: 'نام کاربری' },
+  password: { en: 'Password', fa: 'رمز عبور' },
+  login: { en: 'LOGIN', fa: 'ورود' },
+  logout: { en: 'LOGOUT', fa: 'خروج' },
+  createAdminFirst: { en: 'First run: create the admin account (this locks after creation)', fa: 'نصب اولیه: اکانت مدیر را بسازید (پس از ساخت، قفل می‌شود)' },
+  createAdmin: { en: 'CREATE ADMIN', fa: 'ساخت مدیر' },
+  auditLog: { en: 'Audit Log', fa: 'لاگ ممیزی' },
+  authUnavailable: { en: 'Auth backend unavailable (opening index.html via file:// or no PHP). Serve dist/ with PHP/Apache.', fa: 'بک‌اند احراز هویت در دسترس نیست (فایل محلی یا بدون PHP). پوشه dist را با Apache/PHP سرو کنید.' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {
