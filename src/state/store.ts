@@ -125,6 +125,7 @@ interface State {
   setLocale: (l: 'en' | 'fa') => void;
   setRisk: (r: Partial<RiskConfig>) => void;
   openPaperTrade: () => { ok: boolean; reason?: string };
+  openManualTrade: (side: 'LONG' | 'SHORT', qty: number, sl: number, tp: number[]) => { ok: boolean; reason?: string };
   closePaperTrade: (id: string) => void;
   killSwitch: (on: boolean) => void;
   runBacktest: (cfg?: Partial<BtConfig>) => Promise<void>;
@@ -287,6 +288,23 @@ export const useStore = create<State>((set, get) => ({
     return res;
   },
 
+  openManualTrade: (side, qty, sl, tp) => {
+    const { paper, tick, symbol } = get();
+    if (!tick) return { ok: false, reason: 'No live quote yet' };
+    if (paper.killSwitch) return { ok: false, reason: 'KILL SWITCH ACTIVE — no new trades' };
+    if (!(qty > 0) || !isFinite(qty)) return { ok: false, reason: 'Quantity must be > 0' };
+    const q = { bid: tick.bid, ask: tick.ask };
+    const entry = side === 'LONG' ? q.ask : q.bid;
+    if (sl > 0 && !(side === 'LONG' ? sl < entry : sl > entry)) return { ok: false, reason: side === 'LONG' ? 'Stop must be BELOW entry for LONG' : 'Stop must be ABOVE entry for SHORT' };
+    const tps = tp.filter(t => t > 0 && (side === 'LONG' ? t > entry : t < entry));
+    const res = openPosition(paper, symbol, side, qty, q, sl > 0 ? sl : entry * (side === 'LONG' ? 0.98 : 1.02), tps.length ? tps : [entry * (side === 'LONG' ? 1.02 : 0.98)], {
+      confidence: 0, regime: 'MANUAL', setupQuality: 0, rrPlanned: 0,
+    });
+    saveAccount(paper);
+    set({ paper: { ...paper } });
+    return res;
+  },
+
   closePaperTrade: (id) => {
     const { paper, tick } = get();
     if (!tick) return;
@@ -323,6 +341,7 @@ export const useStore = create<State>((set, get) => ({
       const res = backtest(full, { ...DEFAULT_BT, ...cfg });
       const mc = monteCarlo(res.trades, DEFAULT_BT.initialBalance);
       const wf = walkForward(full);
+      try { localStorage.setItem('nexus_bt_last', String(Date.now())); } catch { /* noop */ }
       set({ bt: { metrics: res.metrics, equity: res.equity, trades: res.trades.length, mc, wf, running: false } });
     } catch (e) {
       set({ bt: null, error: String(e) });

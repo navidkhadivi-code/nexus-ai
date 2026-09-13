@@ -139,6 +139,19 @@ const dict: Record<string, { en: string; fa: string }> = {
   dayUnit: { en: 'd', fa: 'روز' },
   hourUnit: { en: 'h', fa: 'ساعت' },
   expiredWord: { en: 'EXPIRED', fa: 'منقضی' },
+  newPaperTrade: { en: 'NEW PAPER TRADE', fa: 'معامله کاغذی جدید' },
+  fromSignal: { en: 'FILL FROM SIGNAL', fa: 'پر کردن از سیگنال' },
+  openTrade: { en: 'OPEN TRADE', fa: 'افتتاح معامله' },
+  notional: { en: 'Notional', fa: 'ارزش' },
+  margin: { en: 'Margin', fa: 'مارجین' },
+  fee: { en: 'Fee', fa: 'کارمزد' },
+  maxLoss: { en: 'Max Loss', fa: 'حداکثر ضرر' },
+  autoRun: { en: 'AUTO BACKTEST: OFF', fa: 'بک‌تست خودکار: خاموش' },
+  autoOn: { en: 'AUTO — every 5 min', fa: 'خودکار — هر ۵ دقیقه' },
+  lastRun: { en: 'last run', fa: 'آخرین اجرا' },
+  autoBtNote: { en: 'Auto mode re-runs the backtest every 5 minutes on the current symbol/timeframe and keeps the last results visible between runs.', fa: 'در حالت خودکار، بک‌تست هر ۵ دقیقه روی نماد/تایم فعلی دوباره اجرا می‌شود و تا اجرای بعدی، آخرین نتایج نمایش داده می‌شود.' },
+  manualSlTpNote: { en: 'Manual trades fill instantly at live bid/ask + slippage + fee; SL/TP are monitored on real quotes just like signals.', fa: 'معاملات دستی آنی روی bid/ask زنده + اسلیپیج + کارمزد اجرا می‌شوند؛ حد ضرر/هدف مثل سیگنال روی قیمت واقعی پایش می‌شوند.' },
+  candlesWord: { en: 'historical candles', fa: 'کندل تاریخی' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {

@@ -370,8 +370,8 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
   {
     icon: '🧪', t: { en: 'Paper trading (practice with real prices)', fa: 'معامله کاغذی (تمرین با قیمت واقعی)' },
     b: {
-      en: ['The button "OPEN PAPER TRADE" on the dashboard becomes active only when consensus AND ARES approve.', 'Fills use the real bid/ask + slippage + 0.1% fee — like a real exchange, but with fake money ($10,000 test account).', 'Track open trades in "Positions", closed ones in "Journal" (CSV export available).', 'The red KILL SWITCH button closes everything and blocks new trades.'],
-      fa: ['دکمه «افتتاح معامله کاغذی» در داشبورد فقط وقتی فعال می‌شود که اجماع و ARES هر دو تأیید کنند.', 'اجرا با bid/ask واقعی + اسلیپیج + کارمزد ۰.۱٪ — مثل صرافی واقعی ولی با پول آزمایشی (حساب ۱۰ هزار دلاری).', 'معاملات باز در «معاملات باز» و بسته‌شده‌ها در «ژورنال» (خروجی CSV دارد).', 'دکمه قرمز «کلید اضطراری» همه را می‌بندد و معامله جدید را بلاک می‌کند.'],
+      en: ['The button "OPEN PAPER TRADE" on the dashboard becomes active only when consensus AND ARES approve.', 'Want your own setup? The "Positions" menu has a full manual order panel: LONG/SHORT, quantity, stop, TP1-3 — or press "FILL FROM SIGNAL" to load the current signal levels. Live preview of margin, fee and max loss before you open.', 'Fills use the real bid/ask + slippage + 0.1% fee — like a real exchange, but with fake money ($10,000 test account).', 'Track open trades in "Positions", closed ones in "Journal" (CSV export available).', 'The red KILL SWITCH button closes everything and blocks new trades.'],
+      fa: ['دکمه «افتتاح معامله کاغذی» در داشبورد فقط وقتی فعال می‌شود که اجماع و ARES هر دو تأیید کنند.', 'ستاپ خودت را می‌خواهی؟ منوی «معاملات باز» پنل کامل سفارش دستی دارد: LONG/SHORT، حجم، حد ضرر، TP1-3 — یا دکمه «پر کردن از سیگنال» سطوح سیگنال فعلی را بارگذاری می‌کند. قبل از باز کردن، مارجین، کارمزد و حداکثر ضرر را زنده ببین.', 'اجرا با bid/ask واقعی + اسلیپیج + کارمزد ۰.۱٪ — مثل صرافی واقعی ولی با پول آزمایشی (حساب ۱۰ هزار دلاری).', 'معاملات باز در «معاملات باز» و بسته‌شده‌ها در «ژورنال» (خروجی CSV دارد).', 'دکمه قرمز «کلید اضطراری» همه را می‌بندد و معامله جدید را بلاک می‌کند.'],
     },
   },
   {
@@ -384,8 +384,8 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
   {
     icon: '🧾', t: { en: 'Backtest', fa: 'بک‌تست' },
     b: {
-      en: ['The Backtest menu runs the strategy on thousands of real historical candles with fees and slippage, plus Monte Carlo and Walk-Forward tests.', 'Past results NEVER guarantee future profit — this tool measures risk, it does not promise income.'],
-      fa: ['منوی بک‌تست استراتژی را روی هزاران کندل تاریخی واقعی با کارمزد و اسلیپیج اجرا می‌کند به‌علاوه مونت‌کارلو و Walk-Forward.', 'نتایج گذشته هرگز سود آینده را تضمین نمی‌کند — این ابزار ریسک را می‌سنجد، وعده درآمد نمی‌دهد.'],
+      en: ['The Backtest menu runs the strategy on thousands of real historical candles with fees and slippage, plus Monte Carlo and Walk-Forward tests.', 'Manual: press RUN BACKTEST anytime. Automatic: switch AUTO on and it re-runs every 5 minutes on the current symbol/timeframe.', 'Past results NEVER guarantee future profit — this tool measures risk, it does not promise income.'],
+      fa: ['منوی بک‌تست استراتژی را روی هزاران کندل تاریخی واقعی با کارمزد و اسلیپیج اجرا می‌کند به‌علاوه مونت‌کارلو و Walk-Forward.', 'دستی: هر وقت خواستی RUN BACKTEST را بزن. خودکار: AUTO را روشن کن تا هر ۵ دقیقه روی نماد/تایم فعلی دوباره اجرا شود.', 'نتایج گذشته هرگز سود آینده را تضمین نمی‌کند — این ابزار ریسک را می‌سنجد، وعده درآمد نمی‌دهد.'],
     },
   },
   {
@@ -531,8 +531,62 @@ function SignalsScreen({ s, lang }: any) {
 
 function PositionsScreen({ s, lang }: any) {
   const st = portfolio(s.paper);
+  const [side, setSide] = useState<'LONG' | 'SHORT'>('LONG');
+  const [qty, setQty] = useState('');
+  const [sl, setSl] = useState('');
+  const [tp1, setTp1] = useState('');
+  const [tp2, setTp2] = useState('');
+  const [tp3, setTp3] = useState('');
+  const tick = s.tick;
+  const entry = tick ? (side === 'LONG' ? tick.ask : tick.bid) : 0;
+  const qn = parseFloat(qty) || 0;
+  const sln = parseFloat(sl) || 0;
+  const notional = qn * entry;
+  const margin = notional / 5;
+  const fee = notional * 0.001;
+  const maxLoss = sln > 0 ? Math.abs(entry - sln) * qn : 0;
+  const rr = sln > 0 && tp1 ? Math.abs(parseFloat(tp1) - entry) / Math.abs(entry - sln) : 0;
+
+  const fillFromSignal = () => {
+    const c = s.consensus; const a = s.ares;
+    if (!c || !a) return;
+    if (c.direction !== 'NEUTRAL') setSide(c.direction);
+    if (c.stop) setSl(String(c.stop));
+    (c.targets || []).slice(0, 3).forEach((t: number, i: number) => { const v = String(t); [setTp1, setTp2, setTp3][i](v); });
+    if (a.quantity > 0) setQty(a.quantity.toFixed(6));
+  };
+
+  const open = () => {
+    const r = s.openManualTrade(side, qn, sln, [parseFloat(tp1) || 0, parseFloat(tp2) || 0, parseFloat(tp3) || 0]);
+    if (!r.ok) alert(r.reason); else { setQty(''); setSl(''); setTp1(''); setTp2(''); setTp3(''); }
+  };
+
   return (
     <div>
+      <Panel title={`${t('newPaperTrade', lang)} — ${s.symbol}`}>
+        <div className="mt-row">
+          <div className="mt-side">
+            <button className={`chip ${side === 'LONG' ? 'on' : ''}`} style={{ color: side === 'LONG' ? 'var(--up)' : undefined }} onClick={() => setSide('LONG')}>LONG ▲</button>
+            <button className={`chip ${side === 'SHORT' ? 'on' : ''}`} style={{ color: side === 'SHORT' ? 'var(--down)' : undefined }} onClick={() => setSide('SHORT')}>SHORT ▼</button>
+          </div>
+          <label className="mt-f"><span>{t('qty', lang)}</span><input className="inp" type="number" step="any" min="0" value={qty} onChange={e => setQty(e.target.value)} placeholder="0.01" /></label>
+          <label className="mt-f"><span>{t('stop', lang)}</span><input className="inp" type="number" step="any" value={sl} onChange={e => setSl(e.target.value)} placeholder={entry ? (side === 'LONG' ? (entry * 0.98).toFixed(1) : (entry * 1.02).toFixed(1)) : ''} /></label>
+          <label className="mt-f"><span>TP1</span><input className="inp" type="number" step="any" value={tp1} onChange={e => setTp1(e.target.value)} /></label>
+          <label className="mt-f"><span>TP2</span><input className="inp" type="number" step="any" value={tp2} onChange={e => setTp2(e.target.value)} /></label>
+          <label className="mt-f"><span>TP3</span><input className="inp" type="number" step="any" value={tp3} onChange={e => setTp3(e.target.value)} /></label>
+          <button className="btn" onClick={fillFromSignal} disabled={!s.consensus}>⚡ {t('fromSignal', lang)}</button>
+          <button className="btn primary" onClick={open} disabled={!tick || qn <= 0}>{t('openTrade', lang)}</button>
+        </div>
+        <div className="mt-info">
+          <span>{t('price', lang)}: <b>{entry ? fmt(entry, 2, lang) : '—'}</b></span>
+          <span>{t('notional', lang)}: <b>${fmt(notional, 2, lang)}</b></span>
+          <span>{t('margin', lang)}: <b>${fmt(margin, 2, lang)}</b></span>
+          <span>{t('fee', lang)}: <b>${fmt(fee, 2, lang)}</b></span>
+          <span>{t('maxLoss', lang)}: <b className="down">${fmt(maxLoss, 2, lang)}</b></span>
+          {rr > 0 && <span>R/R: <b className={rr >= 1.3 ? 'up' : 'down'}>{rr.toFixed(2)}</b></span>}
+        </div>
+        <div className="small muted note">{t('paperNote', lang)} · {t('manualSlTpNote', lang)}</div>
+      </Panel>
       <PortfolioBox s={s} lang={lang} />
       <Panel title={t('positions', lang)}>
         <table className="tbl">
@@ -567,12 +621,28 @@ function PositionsScreen({ s, lang }: any) {
 
 function BacktestScreen({ s, lang }: any) {
   const bt = s.bt;
+  const [auto, setAuto] = useState(() => localStorage.getItem('nexus_bt_auto') === '1');
+
+  useEffect(() => {
+    try { localStorage.setItem('nexus_bt_auto', auto ? '1' : '0'); } catch { /* noop */ }
+    if (!auto) return;
+    s.runBacktest();
+    const id = window.setInterval(() => s.runBacktest(), 5 * 60000);
+    return () => clearInterval(id);
+  }, [auto]);
+
+  const last = localStorage.getItem('nexus_bt_last');
   return (
     <div>
       <div className="bt-ctrl">
         <button className="btn primary" disabled={bt?.running} onClick={() => s.runBacktest()}>{bt?.running ? '…' : t('runBacktest', lang)}</button>
-        <span className="small muted">{t('backtesting', lang)} — Binance {s.symbol} {s.timeframe} · {fmt(s.candles.length, 0, lang)} + 1000/2000 historical candles</span>
+        <button className={`btn ${auto ? 'on' : ''}`} style={auto ? { background: '#0ecb81', borderColor: '#0ecb81', color: '#05080e' } : undefined} onClick={() => setAuto(!auto)}>
+          {auto ? `⏱ ${t('autoOn', lang)}` : t('autoRun', lang)}
+        </button>
+        <span className="small muted">{t('backtesting', lang)} — {s.symbol} {s.timeframe} · {fmt(s.candles.length, 0, lang)} + 2000 {t('candlesWord', lang)}</span>
+        {last && <span className="small muted">· {t('lastRun', lang)}: {new Date(+last).toLocaleTimeString()}</span>}
       </div>
+      {auto && <div className="small muted note" style={{ marginTop: -4, marginBottom: 10 }}>{t('autoBtNote', lang)}</div>}
       {bt?.metrics && (
         <div className="grid-metrics">
           <Metric label={t('netProfit', lang)} value={`$${fmt(bt.metrics.netProfit, 2, lang)}`} tone={bt.metrics.netProfit >= 0 ? 'up' : 'down'} />

@@ -214,6 +214,14 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 html[dir='ltr'] .guide-list { margin: 0 0 0 18px; }
 .guide-list li { font-size: 12.5px; line-height: 1.7; color: var(--text); }
 
+/* manual trade panel */
+.mt-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.mt-side { display: flex; gap: 4px; }
+.mt-f { display: flex; flex-direction: column; gap: 4px; font-size: 10.5px; color: var(--muted); }
+.mt-f .inp { width: 130px; padding: 7px 9px; }
+.mt-info { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
+.mt-info b { color: var(--text); }
+
 /* status bar */
 .statusbar { display: flex; justify-content: space-between; gap: 14px; padding: 5px 14px; font-size: 10.5px; color: var(--muted); border-top: 1px solid var(--line2); background: var(--bg2); flex-wrap: wrap; }
 
