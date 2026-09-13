@@ -175,11 +175,13 @@ function Terminal({ s, lang }: any) {
           <span className="meta">{s.tick?.source ?? '—'} · {fmt(s.health.marketLatencyMs, 0, lang)} ms</span>
         </div>
         <div className="top-right">
-          {s.auth?.expires && (
-            <span className="mode-badge plan" title={`${t('expires', lang)}: ${new Date(s.auth.expires * 1000).toLocaleDateString()}`}>
+          {s.auth?.expires ? (
+            <span className={`mode-badge ${Math.ceil((s.auth.expires - Date.now() / 1000) / 86400) <= 3 ? 'plan warn' : 'plan'}`} title={`${t('expires', lang)}: ${new Date(s.auth.expires * 1000).toLocaleDateString()}`}>
               ⏳ {Math.max(0, Math.ceil((s.auth.expires - Date.now() / 1000) / 86400))} {t('daysLeftWord', lang)}
             </span>
-          )}
+          ) : s.auth?.role === 'ADMIN' ? (
+            <span className="mode-badge admin">⚙ ADMIN · ∞</span>
+          ) : null}
           <span className="user-badge">{s.auth?.user}{s.auth?.role === 'ADMIN' ? ' ⚙' : ''}</span>
           <button className="lang-btn" onClick={() => void s.authLogout()}>{t('logout', lang)}</button>
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>

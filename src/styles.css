@@ -236,7 +236,9 @@ textarea.inp { resize: vertical; font-family: inherit; }
 .login-card .logo.big { width: 56px; height: 56px; font-size: 32px; margin: 0 auto; border-radius: 14px; }
 .login-card .brand-name { letter-spacing: 3px; font-size: 18px; }
 .login-card .inp { width: 100%; }
-.mode-badge.plan { background: #0ecb8118; color: var(--up); border: 1px solid #0ecb8144; }
+.mode-badge.plan { background: #0ecb8118; color: var(--up); border: 1px solid #0ecb8144; font-size: 11.5px; padding: 5px 11px; }
+.mode-badge.plan.warn { background: #ffb34722; color: var(--amber); border-color: #ffb34766; }
+.mode-badge.admin { background: #b46bff1a; color: var(--violet); border: 1px solid #b46bff44; }
 .user-badge { font-size: 11px; color: var(--muted); font-weight: 700; }
 .btns { display: flex; gap: 4px; flex-wrap: wrap; }
 
