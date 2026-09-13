@@ -1,4 +1,4 @@
-# NEXUS AI — VPS roadmap compose (Phase 42). NOT used by the shared-hosting static deploy.
+# Persian Trade — VPS roadmap compose (Phase 42). NOT used by the shared-hosting static deploy.
 version: "3.9"
 services:
   postgres:

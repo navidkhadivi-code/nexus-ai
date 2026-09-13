@@ -1,4 +1,4 @@
-# NEXUS AI — Institutional Crypto Intelligence Terminal
+# Persian Trade — Institutional Crypto Intelligence Terminal
 
 > Real market data · deterministic quant engines · 8-agent consensus · ARES risk veto ·
 > paper trading on live bid/ask · event-driven backtesting · English + فارسی (RTL)

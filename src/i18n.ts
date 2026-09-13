@@ -1,7 +1,7 @@
 export type Lang = 'en' | 'fa';
 
 const dict: Record<string, { en: string; fa: string }> = {
-  appTitle: { en: 'NEXUS AI', fa: 'نکسوس AI' },
+  appTitle: { en: 'PERSIAN TRADE', fa: 'پرشین ترید' },
   tagline: { en: 'Institutional Crypto Intelligence Terminal', fa: 'ترمینال هوش معاملاتی نهادی' },
   dashboard: { en: 'Dashboard', fa: 'داشبورد' },
   guide: { en: 'Guide', fa: 'آموزش' },

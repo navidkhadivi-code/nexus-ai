@@ -1,5 +1,5 @@
 <?php
-// NEXUS AI admin gate — PHP 5.4+ compatible (host runs legacy PHP). Data OUTSIDE webroot.
+// Persian Trade admin gate — PHP 5.4+ compatible (host runs legacy PHP). Data OUTSIDE webroot.
 
 $home = dirname(dirname(__DIR__)); // /home3/<user>
 if (!is_dir($home . '/nexus_data')) { @mkdir($home . '/nexus_data', 0700, true); }

@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import type { Candle, ConnState, OrderBook, Tick, Timeframe, Trade, ExchangeAdapter } from '../api/types';
 import { TF_MS } from '../api/types';
 import { MarketGateway } from '../api/gateway';
@@ -473,7 +473,7 @@ function computePerf(hist: LiveSignal[]): AgentPerf[] {
 
 function notify(sig: LiveSignal) {
   if ('Notification' in window && Notification.permission === 'granted' && (sig.status === 'STOP' || sig.status === 'TP1' || sig.status === 'TP2' || sig.status === 'TP3' || sig.status === 'ACTIVE')) {
-    try { new Notification(`NEXUS AI â€” ${sig.symbol}`, { body: `${sig.direction} ${sig.status}` }); } catch { /* denied */ }
+    try { new Notification(`Persian Trade â€” ${sig.symbol}`, { body: `${sig.direction} ${sig.status}` }); } catch { /* denied */ }
   }
 }
 
