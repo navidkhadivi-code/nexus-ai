@@ -1,0 +1,32 @@
+# NEXUS AI — VPS roadmap compose (Phase 42). NOT used by the shared-hosting static deploy.
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: nexus
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redisdata:/data"]
+  backend:
+    build: ./apps/backend        # NestJS API + workers (roadmap module)
+    env_file: .env
+    depends_on: [postgres, redis]
+  market-data:
+    build: ./apps/market-data    # WS ingestion → Redis/PG (roadmap module)
+    env_file: .env
+    depends_on: [postgres, redis]
+  frontend:
+    build: ./apps/frontend       # Next.js (roadmap module)
+    env_file: .env
+    depends_on: [backend]
+  nginx:
+    image: nginx:alpine
+    ports: ["80:80", "443:443"]
+    volumes: ["./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    depends_on: [backend, frontend]
+volumes: { pgdata: {}, redisdata: {} }

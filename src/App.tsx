@@ -1,0 +1,555 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useStore } from './state/store';
+import { t, fmt, type Lang } from './i18n';
+import Chart, { type ChartPrefs } from './components/Chart';
+import { analyzeStructure } from './engine/structure';
+import { TIMEFRAMES, type Timeframe } from './api/binance';
+import { exportCsv } from './paper/engine';
+
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'];
+
+type Screen = 'dashboard' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
+
+export default function App() {
+  const s = useStore();
+  const lang = s.locale as Lang;
+  const [screen, setScreen] = useState<Screen>('dashboard');
+  const [prefs, setPrefs] = useState<ChartPrefs>({ ema20: true, ema50: true, bb: false, vwap: true, bos: true, liquidity: true, fvg: true, ob: true, gann: false });
+
+  useEffect(() => { s.init(); }, []);
+
+  const structure = useMemo(() => s.candles.length > 60 ? analyzeStructure(s.candles) : null, [s.candles.length]);
+
+  const NAV: { id: Screen; key: string }[] = [
+    { id: 'dashboard', key: 'dashboard' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
+    { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
+    { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
+    { id: 'admin', key: 'admin' }, { id: 'health', key: 'systemHealth' },
+  ];
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <div className="logo">◈</div>
+          <div>
+            <div className="brand-name">{t('appTitle', lang)}</div>
+            <div className="brand-sub">{t('tagline', lang)}</div>
+          </div>
+        </div>
+        <div className="ticker">
+          <select className="sym-sel" value={s.symbol} onChange={e => s.setSymbol(e.target.value)}>
+            {SYMBOLS.map(x => <option key={x}>{x}</option>)}
+          </select>
+          <span className={`conn ${s.conn.toLowerCase()}`}>{connLabel(s.conn, lang)}</span>
+          <span className="big-price">{s.tick ? fmt(s.tick.price, 2, lang) : '—'}</span>
+          {s.candles.length > 1 && s.tick && (
+            <span className={s.tick.price >= s.candles[s.candles.length - 2].c ? 'chg up' : 'chg down'}>
+              {(((s.tick.price - s.candles[s.candles.length - 2].c) / s.candles[s.candles.length - 2].c) * 100).toFixed(2)}%
+            </span>
+          )}
+          <span className="meta">{s.tick?.source ?? '—'} · {fmt(s.health.marketLatencyMs, 0, lang)} ms</span>
+        </div>
+        <div className="top-right">
+          <span className="mode-badge paper">PAPER</span>
+          <span className="mode-badge off" title={t('liveWarn', lang)}>{t('liveTradeDisabled', lang)}</span>
+          <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
+        </div>
+      </header>
+
+      <div className="body">
+        <nav className="sidebar">
+          {NAV.map(n => (
+            <button key={n.id} className={screen === n.id ? 'nav active' : 'nav'} onClick={() => setScreen(n.id)}>{t(n.key, lang)}</button>
+          ))}
+          <div className="side-foot">
+            <div className="stale-note">{s.conn === 'STALE' ? t('staleStop', lang) : ''}</div>
+          </div>
+        </nav>
+
+        <main className="main">
+          {s.error && <div className="err-banner">{s.error}</div>}
+          {screen === 'dashboard' && <Dashboard s={s} lang={lang} prefs={prefs} setPrefs={setPrefs} structure={structure} />}
+          {screen === 'orderflow' && <OrderFlowScreen s={s} lang={lang} />}
+          {screen === 'liquidity' && <LiquidityScreen s={s} lang={lang} structure={structure} />}
+          {screen === 'ai' && <AiScreen s={s} lang={lang} />}
+          {screen === 'signals' && <SignalsScreen s={s} lang={lang} />}
+          {screen === 'positions' && <PositionsScreen s={s} lang={lang} />}
+          {screen === 'backtest' && <BacktestScreen s={s} lang={lang} />}
+          {screen === 'journal' && <JournalScreen s={s} lang={lang} />}
+          {screen === 'settings' && <SettingsScreen s={s} lang={lang} />}
+          {screen === 'admin' && <AdminScreen s={s} lang={lang} />}
+          {screen === 'health' && <HealthScreen s={s} lang={lang} />}
+        </main>
+      </div>
+      <footer className="statusbar">
+        <span>{t('paperNote', lang)}</span>
+        <span>{t('welcome', lang)}</span>
+        <span className="mono">engine {s.health.engineMs}ms · up {Math.floor(s.health.uptimeSec / 60)}m</span>
+      </footer>
+    </div>
+  );
+}
+
+function connLabel(c: string, lang: Lang) {
+  const map: Record<string, string> = { LIVE: t('live', lang), STALE: t('stale', lang), OFFLINE: t('offline', lang), CONNECTING: t('connecting', lang), ERROR: t('error', lang) };
+  return map[c] ?? c;
+}
+
+function Panel({ title, children, cls }: { title: string; children: React.ReactNode; cls?: string }) {
+  return <section className={`panel ${cls ?? ''}`}><div className="panel-h">{title}</div><div className="panel-b">{children}</div></section>;
+}
+
+// ---------------- DASHBOARD ----------------
+function Dashboard({ s, lang, prefs, setPrefs, structure }: any) {
+  const cons = s.consensus as ReturnType<typeof useStore.getState>['consensus'];
+  return (
+    <div className="grid-dash">
+      <Panel title={`${s.symbol} · ${s.timeframe} · ${s.activeSource}`} cls="g-chart">
+        <div className="tf-row">
+          {TIMEFRAMES.map(tf => (
+            <button key={tf} className={s.timeframe === tf ? 'chip on' : 'chip'} onClick={() => s.setTimeframe(tf as Timeframe)}>{tf.toUpperCase()}</button>
+          ))}
+        </div>
+        <div className="pref-row">
+          {(['ema20', 'ema50', 'bb', 'vwap', 'bos', 'liquidity', 'ob', 'gann'] as (keyof ChartPrefs)[]).map(k => (
+            <label key={k} className="pref"><input type="checkbox" checked={(prefs as any)[k]} onChange={() => setPrefs({ ...prefs, [k]: !(prefs as any)[k] })} />{k}</label>
+          ))}
+        </div>
+        <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann}
+          signalLine={s.signal ? { entry: s.signal.entry, stop: s.signal.stop, targets: s.signal.targets } : null} />
+      </Panel>
+
+      <Panel title={t('consensus', lang)} cls="g-consensus">
+        <ConsensusBox s={s} lang={lang} />
+      </Panel>
+
+      <Panel title={t('aiEngine', lang)} cls="g-agents">
+        <AgentGrid s={s} lang={lang} />
+      </Panel>
+
+      <Panel title={t('orderBook', lang)} cls="g-book">
+        <BookMini s={s} lang={lang} />
+      </Panel>
+
+      <Panel title={t('portfolio', lang)} cls="g-port">
+        <PortfolioBox s={s} lang={lang} />
+      </Panel>
+    </div>
+  );
+}
+
+function ConsensusBox({ s, lang }: any) {
+  const c = s.consensus, a = s.ares;
+  if (!c) return <div className="empty">{t('noData', lang)}</div>;
+  const dirColor = c.direction === 'LONG' ? 'up' : c.direction === 'SHORT' ? 'down' : 'flat';
+  return (
+    <div className="cons-box">
+      <div className={`cons-dir ${dirColor}`}>{c.direction}</div>
+      <div className="cons-stats">
+        <div><b>{c.confidence.toFixed(0)}%</b><span>{t('confidence', lang)}</span></div>
+        <div><b>{c.agreement.toFixed(0)}%</b><span>{t('agreement', lang)}</span></div>
+        <div><b>{c.setupQuality.toFixed(0)}</b><span>{t('setupQuality', lang)}</span></div>
+        <div><b>{c.directionalScore.toFixed(0)}</b><span>Score</span></div>
+      </div>
+      {c.noTrade ? (
+        <div className="no-trade">{t('noTrade', lang)}<ul>{c.noTradeReasons.map((r: string, i: number) => <li key={i}>{r}</li>)}</ul></div>
+      ) : (
+        <div className="cons-levels">
+          <div className="row"><span>{t('entry', lang)}</span><b>{c.entryZone ? `${fmt(c.entryZone.min, 2, lang)} – ${fmt(c.entryZone.max, 2, lang)}` : '—'}</b></div>
+          <div className="row down"><span>{t('stop', lang)}</span><b>{fmt(c.stop, 2, lang)}</b></div>
+          <div className="row up"><span>{t('targets', lang)}</span><b>{c.targets.map((x: number) => fmt(x, 2, lang)).join(' / ')}</b></div>
+          <div className="row"><span>{t('riskReward', lang)}</span><b>{a ? a.rr.toFixed(2) : '—'}</b></div>
+        </div>
+      )}
+      {a && (
+        <div className={`ares ${a.allowed ? 'ok' : 'veto'}`}>
+          {a.allowed ? `✓ ${t('aresApproves', lang)}` : `⛔ ${t('aresVeto', lang)}`}
+          {!a.allowed && <ul>{a.vetoReasons.map((r: string, i: number) => <li key={i}>{r}</li>)}</ul>}
+        </div>
+      )}
+      <button className="btn primary" disabled={c.noTrade || !a?.allowed} onClick={() => { const r = s.openPaperTrade(); if (!r.ok) alert(r.reason); }}>{t('openPaper', lang)}</button>
+      <div className="mtf">
+        {Object.entries(c.mtf).map(([tf, v]: [string, any]) => (
+          <span key={tf} className={`mtf-chip ${v.direction === 'LONG' ? 'up' : v.direction === 'SHORT' ? 'down' : ''}`}>{tf.toUpperCase()} {v.direction}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AgentGrid({ s, lang }: any) {
+  const c = s.consensus;
+  if (!c) return <div className="empty">{t('noData', lang)}</div>;
+  const perf = s.agentPerf as any[];
+  return (
+    <div className="agent-grid">
+      {c.agents.map((a: any) => {
+        const p = perf.find(x => x.agent === a.agent);
+        return (
+          <div key={a.agent} className={`agent ${a.direction === 'LONG' ? 'long' : a.direction === 'SHORT' ? 'short' : ''}`}>
+            <div className="agent-head"><b>{a.agent}</b><span className={`dot ${a.confidence > 0 ? 'on' : 'idle'}`} /></div>
+            <div className="agent-dir">{a.direction}</div>
+            <div className="bar"><i style={{ width: `${a.confidence}%` }} /></div>
+            <div className="agent-foot">{a.confidence.toFixed(0)}% · {t('accuracy', lang)}: {p ? `${p.accuracy.toFixed(0)}% (${p.preds})` : '—'}</div>
+          </div>
+        );
+      })}
+      <div className={`agent ares ${s.ares?.allowed ? 'long' : s.ares ? 'short' : ''}`}>
+        <div className="agent-head"><b>ARES</b><span className={`dot ${s.ares ? 'on' : 'idle'}`} /></div>
+        <div className="agent-dir">{s.ares ? (s.ares.allowed ? 'APPROVE' : 'VETO') : '—'}</div>
+        <div className="bar"><i style={{ width: s.ares ? `${Math.min(100, s.ares.checks.filter((x: any) => x.passed).length / s.ares.checks.length * 100)}%` : '0%' }} /></div>
+        <div className="agent-foot">risk veto · {s.ares?.checks.filter((x: any) => x.passed).length ?? 0}/{s.ares?.checks.length ?? 0} checks</div>
+      </div>
+    </div>
+  );
+}
+
+function BookMini({ s, lang }: any) {
+  const bm = s.bookMetrics;
+  if (!bm) return <div className="empty">{t('noData', lang)}</div>;
+  const maxCum = Math.max(bm.cumBid[bm.cumBid.length - 1] ?? 1, bm.cumAsk[bm.cumAsk.length - 1] ?? 1);
+  const pts = (cum: number[]) => cum.map((v, i) => `${(i / Math.max(cum.length - 1, 1)) * 100},${100 - (v / maxCum) * 100}`).join(' ');
+  return (
+    <div className="book">
+      <div className="book-head">
+        <span>{t('spread', lang)}: <b>{fmt(bm.spreadPct, 3, lang)}%</b></span>
+        <span>{t('mid', lang)}: <b>{fmt(bm.mid, 2, lang)}</b></span>
+        <span>{t('imbalance', lang)}: <b className={bm.depthImbalance >= 0 ? 'up' : 'down'}>{(bm.depthImbalance * 100).toFixed(1)}%</b></span>
+      </div>
+      <div className="depth">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon points={`0,100 ${pts(bm.cumBid)} 100,100`} fill="rgba(14,203,129,.25)" stroke="#0ecb81" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <polygon points={`100,0 ${pts(bm.cumAsk.slice().reverse()).split(' ').reverse().join(' ')} 0,0`} fill="rgba(246,70,93,.25)" stroke="#f6465d" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
+      <div className="ob-rows">
+        <div className="ob-col">{s.book?.asks.slice(0, 8).reverse().map((l: any, i: number) => <div key={i} className="ob-row ask"><span>{fmt(l.price, 2, lang)}</span><span>{l.qty.toFixed(2)}</span></div>)}</div>
+        <div className="ob-col">{s.book?.bids.slice(0, 8).map((l: any, i: number) => <div key={i} className="ob-row bid"><span>{fmt(l.price, 2, lang)}</span><span>{l.qty.toFixed(2)}</span></div>)}</div>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioBox({ s, lang }: any) {
+  const stats = portfolio(s.paper);
+  return (
+    <div className="port-grid">
+      <Metric label={t('balance', lang)} value={`$${fmt(stats.cash, 2, lang)}`} />
+      <Metric label={t('equity', lang)} value={`$${fmt(stats.equity, 2, lang)}`} strong />
+      <Metric label={t('unrealized', lang)} value={`$${fmt(stats.unrealized, 2, lang)}`} tone={stats.unrealized >= 0 ? 'up' : 'down'} />
+      <Metric label={t('realized', lang)} value={`$${fmt(stats.realized, 2, lang)}`} tone={stats.realized >= 0 ? 'up' : 'down'} />
+      <Metric label={t('exposure', lang)} value={`$${fmt(stats.exposure, 2, lang)}`} />
+      <Metric label={t('drawdown', lang)} value={`${fmt(stats.maxDrawdownPct, 2, lang)}%`} tone="down" />
+      <div className="kill">
+        <button className={`btn ${s.paper.killSwitch ? 'danger on' : 'danger'}`} onClick={() => { if (confirm(`${t('killSwitch', lang)}?`)) s.killSwitch(!s.paper.killSwitch); }}>
+          {t('stopAll', lang)}
+        </button>
+        {s.paper.killSwitch && <div className="down small">{t('killSwitch', lang)}: ACTIVE</div>}
+      </div>
+    </div>
+  );
+}
+
+function portfolio(p: any) {
+  const unreal = p.positions.reduce((a: number, x: any) => a + (x.side === 'LONG' ? (x.mark - x.entry) : (x.entry - x.mark)) * x.qty, 0);
+  const exposure = p.positions.reduce((a: number, x: any) => a + x.mark * x.qty, 0);
+  const realized = p.journal.reduce((a: number, x: any) => a + x.pnlUsd, 0);
+  let peak = p.startBalance, mdd = 0;
+  for (const e of p.equityCurve) { peak = Math.max(peak, e.v); mdd = Math.max(mdd, (peak - e.v) / (peak || 1)); }
+  return { cash: p.cash, equity: p.startBalance + realized + unreal, unrealized: unreal, realized, exposure, maxDrawdownPct: mdd * 100 };
+}
+
+function Metric({ label, value, tone, strong }: any) {
+  return <div className={`metric ${tone ?? ''}`}><span>{label}</span><b className={strong ? 'big' : ''}>{value}</b></div>;
+}
+
+// ---------------- OTHER SCREENS ----------------
+function OrderFlowScreen({ s, lang }: any) {
+  const c = s.consensus;
+  const of = c?.agents.find((a: any) => a.agent === 'LUMA');
+  return (
+    <div className="grid-two">
+      <Panel title={t('orderFlow', lang)}>
+        <FullBook s={s} lang={lang} />
+      </Panel>
+      <Panel title="CVD / DELTA (LUMA)">
+        {!of ? <div className="empty">{t('noData', lang)}</div> : (
+          <div className="of-list">
+            {of.reasons.map((r: string, i: number) => <div key={i} className="of-row">◆ {r}</div>)}
+            {of.risks.map((r: string, i: number) => <div key={'r' + i} className="of-row warn">⚠ {r}</div>)}
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+function FullBook({ s, lang }: any) {
+  if (!s.book) return <div className="empty">{t('noData', lang)}</div>;
+  return (
+    <div className="ob-rows full">
+      <div className="ob-col">{s.book.asks.slice(0, 18).reverse().map((l: any, i: number) => <div key={i} className="ob-row ask"><span>{fmt(l.price, 2, lang)}</span><span>{l.qty.toFixed(3)}</span></div>)}</div>
+      <div className="ob-col">{s.book.bids.slice(0, 18).map((l: any, i: number) => <div key={i} className="ob-row bid"><span>{fmt(l.price, 2, lang)}</span><span>{l.qty.toFixed(3)}</span></div>)}</div>
+    </div>
+  );
+}
+
+function LiquidityScreen({ s, lang }: any) {
+  const c = s.consensus;
+  const at = c?.agents.find((a: any) => a.agent === 'ATLAS');
+  const g = c?.agents.find((a: any) => a.agent === 'GANN');
+  return (
+    <div className="grid-two">
+      <Panel title={t('liquidity', lang)}>
+        {!at ? <div className="empty">{t('noData', lang)}</div> : (
+          <div className="liq-list">
+            {at.reasons.map((r: string, i: number) => <div key={i} className="of-row">◆ {r}</div>)}
+            {at.risks.map((r: string, i: number) => <div key={'r' + i} className="of-row">{r}</div>)}
+          </div>
+        )}
+      </Panel>
+      <Panel title="GANN / PRICE-TIME">
+        {!g ? <div className="empty">{t('noData', lang)}</div> : (
+          <div className="liq-list">
+            {g.reasons.map((r: string, i: number) => <div key={i} className="of-row">◆ {r}</div>)}
+            {g.risks.map((r: string, i: number) => <div key={'r' + i} className="of-row warn">⚠ {r}</div>)}
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+function AiScreen({ s, lang }: any) {
+  const c = s.consensus;
+  if (!c) return <div className="empty">{t('noData', lang)}</div>;
+  return (
+    <div className="ai-screen">
+      <div className="reasons-col">
+        <Panel title={`${t('reasons', lang)} — ${c.direction} @ ${c.confidence.toFixed(0)}%`}>
+          {c.summaryReasons.slice(0, 30).map((r: string, i: number) => <div key={i} className="why-row">▸ {r}</div>)}
+        </Panel>
+      </div>
+      <div className="reasons-col">
+        <Panel title={t('risks', lang)}>
+          {c.summaryRisks.slice(0, 25).map((r: string, i: number) => <div key={i} className="why-row warn">▸ {r}</div>)}
+          {c.noTrade && c.noTradeReasons.map((r: string, i: number) => <div key={'n' + i} className="why-row danger">▸ {r}</div>)}
+        </Panel>
+        <Panel title={t('aiEngine', lang)}>
+          <AgentGrid s={s} lang={lang} />
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function SignalsScreen({ s, lang }: any) {
+  return (
+    <div>
+      <Panel title={t('signals', lang)}>
+        {s.signal ? (
+          <div className="sig-live">
+            <div className={`sig-dir ${s.signal.direction === 'LONG' ? 'up' : 'down'}`}>{s.signal.symbol} {s.signal.direction}</div>
+            <div className="sig-status">{s.signal.status} · conf {s.signal.confidence.toFixed(0)}% · R/R {s.signal.rr.toFixed(2)} · {t('source', lang)}: {s.signal.dataSource}</div>
+            <div className="sig-levels">
+              <span>{t('entry', lang)} {fmt(s.signal.entry, 2, lang)}</span>
+              <span className="down">{t('stop', lang)} {fmt(s.signal.stop, 2, lang)}</span>
+              {s.signal.targets.map((tp: number, i: number) => <span key={i} className="up">TP{i + 1} {fmt(tp, 2, lang)}</span>)}
+            </div>
+          </div>
+        ) : <div className="empty">{t('noTrade', lang)}</div>}
+      </Panel>
+      <Panel title="History">
+        <table className="tbl">
+          <thead><tr><th>{t('time', lang)}</th><th>{t('symbol', lang)}</th><th>{t('status', lang)}</th><th>{t('confidence', lang)}</th><th>R/R</th></tr></thead>
+          <tbody>
+            {(s.signalHistory as any[]).map((h, i) => (
+              <tr key={i}><td>{new Date(h.createdAt).toLocaleString()}</td><td>{h.symbol} {h.direction}</td><td>{h.status}</td><td>{h.confidence.toFixed(0)}%</td><td>{h.rr.toFixed(2)}</td></tr>
+            ))}
+            {!s.signalHistory.length && <tr><td colSpan={5} className="empty">{t('noData', lang)}</td></tr>}
+          </tbody>
+        </table>
+      </Panel>
+    </div>
+  );
+}
+
+function PositionsScreen({ s, lang }: any) {
+  const st = portfolio(s.paper);
+  return (
+    <div>
+      <PortfolioBox s={s} lang={lang} />
+      <Panel title={t('positions', lang)}>
+        <table className="tbl">
+          <thead><tr><th>{t('symbol', lang)}</th><th>{t('status', lang)}</th><th>{t('qty', lang)}</th><th>Entry</th><th>Mark</th><th>SL</th><th>{t('pnl', lang)}</th><th></th></tr></thead>
+          <tbody>
+            {s.paper.positions.map((p: any) => {
+              const pnl = (p.side === 'LONG' ? p.mark - p.entry : p.entry - p.mark) * p.qty;
+              return (
+                <tr key={p.id}>
+                  <td>{p.symbol}</td><td className={p.side === 'LONG' ? 'up' : 'down'}>{p.side}</td><td>{p.qty.toFixed(5)}</td>
+                  <td>{fmt(p.entry, 2, lang)}</td><td>{fmt(p.mark, 2, lang)}</td><td>{fmt(p.sl, 2, lang)}</td>
+                  <td className={pnl >= 0 ? 'up' : 'down'}>${fmt(pnl, 2, lang)}</td>
+                  <td><button className="btn small" onClick={() => s.closePaperTrade(p.id)}>{t('close', lang) ?? 'CLOSE'}</button></td>
+                </tr>
+              );
+            })}
+            {!s.paper.positions.length && <tr><td colSpan={8} className="empty">{t('noData', lang)}</td></tr>}
+          </tbody>
+        </table>
+      </Panel>
+      <Panel title={t('orders', lang)}>
+        <table className="tbl">
+          <thead><tr><th>{t('time', lang)}</th><th>{t('symbol', lang)}</th><th>Side</th><th>{t('price', lang)}</th><th>{t('qty', lang)}</th><th>Fee</th><th>{t('status', lang)}</th></tr></thead>
+          <tbody>
+            {s.paper.orders.slice(0, 30).map((o: any) => <tr key={o.id}><td>{new Date(o.createdAt).toLocaleTimeString()}</td><td>{o.symbol}</td><td>{o.side}</td><td>{fmt(o.fillPrice ?? 0, 2, lang)}</td><td>{o.qty.toFixed(5)}</td><td>${o.feePaid.toFixed(2)}</td><td>{o.status}</td></tr>)}
+          </tbody>
+        </table>
+      </Panel>
+    </div>
+  );
+}
+
+function BacktestScreen({ s, lang }: any) {
+  const bt = s.bt;
+  return (
+    <div>
+      <div className="bt-ctrl">
+        <button className="btn primary" disabled={bt?.running} onClick={() => s.runBacktest()}>{bt?.running ? '…' : t('runBacktest', lang)}</button>
+        <span className="small muted">{t('backtesting', lang)} — Binance {s.symbol} {s.timeframe} · {fmt(s.candles.length, 0, lang)} + 1000/2000 historical candles</span>
+      </div>
+      {bt?.metrics && (
+        <div className="grid-metrics">
+          <Metric label={t('netProfit', lang)} value={`$${fmt(bt.metrics.netProfit, 2, lang)}`} tone={bt.metrics.netProfit >= 0 ? 'up' : 'down'} />
+          <Metric label={t('winRate', lang)} value={`${bt.metrics.winRate.toFixed(1)}%`} />
+          <Metric label={t('profitFactor', lang)} value={bt.metrics.profitFactor === Infinity ? '∞' : bt.metrics.profitFactor.toFixed(2)} />
+          <Metric label={t('sharpe', lang)} value={bt.metrics.sharpe.toFixed(2)} />
+          <Metric label={t('sortino', lang)} value={bt.metrics.sortino.toFixed(2)} />
+          <Metric label={t('drawdown', lang)} value={`${bt.metrics.maxDrawdownPct.toFixed(1)}%`} tone="down" />
+          <Metric label="Avg R" value={bt.metrics.avgR.toFixed(3)} />
+          <Metric label={t('tradesCount', lang)} value={String(bt.metrics.trades)} />
+        </div>
+      )}
+      {bt?.mc && (
+        <Panel title={t('monteCarlo', lang)}>
+          <div className="grid-metrics">
+            <Metric label="P5" value={`$${fmt(bt.mc.p5, 0, lang)}`} />
+            <Metric label="P50" value={`$${fmt(bt.mc.p50, 0, lang)}`} />
+            <Metric label="P95" value={`$${fmt(bt.mc.p95, 0, lang)}`} />
+            <Metric label={t('expRuin', lang)} value={`${bt.mc.probRuin.toFixed(1)}%`} tone="down" />
+            <Metric label="P(loss)" value={`${bt.mc.probNegative.toFixed(1)}%`} />
+            <Metric label="Median MaxDD" value={`${bt.mc.medianMaxDD.toFixed(1)}%`} />
+          </div>
+        </Panel>
+      )}
+      {bt?.wf?.length > 0 && (
+        <Panel title={t('walkForward', lang)}>
+          <table className="tbl"><thead><tr><th>#</th><th>IS ROI</th><th>OOS ROI</th><th>OOS Trades</th><th>Params</th></tr></thead>
+            <tbody>{bt.wf.map((w: any, i: number) => <tr key={i}><td>{w.window}</td><td className={w.isRoi >= 0 ? 'up' : 'down'}>{w.isRoi.toFixed(1)}%</td><td className={w.oosRoi >= 0 ? 'up' : 'down'}>{w.oosRoi.toFixed(1)}%</td><td>{w.oosTrades}</td><td>stop {w.params.stop}×ATR · tp {w.params.target}×ATR</td></tr>)}</tbody>
+          </table>
+        </Panel>
+      )}
+      <div className="small muted note">Backtest = historical simulation with fees/slippage. Past results never guarantee future outcomes.</div>
+    </div>
+  );
+}
+
+function JournalScreen({ s, lang }: any) {
+  return (
+    <Panel title={t('journal', lang)}>
+      <div className="row-end">
+        <button className="btn" onClick={() => {
+          const csv = exportCsv(s.paper);
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = 'nexus_journal.csv'; a.click();
+        }}>{t('exportCsv', lang)}</button>
+      </div>
+      <table className="tbl">
+        <thead><tr><th>{t('symbol', lang)}</th><th>Side</th><th>Entry</th><th>Exit</th><th>{t('pnl', lang)}</th><th>R</th><th>Fees</th><th>{t('time', lang)}</th></tr></thead>
+        <tbody>
+          {s.paper.journal.map((j: any) => (
+            <tr key={j.tradeId}><td>{j.symbol}</td><td>{j.side}</td><td>{fmt(j.entry, 2, lang)}</td><td>{fmt(j.exit, 2, lang)}</td>
+              <td className={j.pnlUsd >= 0 ? 'up' : 'down'}>${fmt(j.pnlUsd, 2, lang)}</td><td>{j.rMultiple.toFixed(2)}</td><td>${j.fees.toFixed(2)}</td><td>{new Date(j.closedAt).toLocaleString()}</td></tr>
+          ))}
+          {!s.paper.journal.length && <tr><td colSpan={8} className="empty">{t('noData', lang)}</td></tr>}
+        </tbody>
+      </table>
+    </Panel>
+  );
+}
+
+function SettingsScreen({ s, lang }: any) {
+  return (
+    <Panel title={t('settings', lang)}>
+      <div className="set-row" style={{ marginBottom: 12 }}>
+        <span>{t('source', lang)} — {t('marketData', lang)}</span>
+        <select value={s.exchange} onChange={e => s.setExchange(e.target.value)} style={{ background: 'var(--bg2)', color: 'var(--text)', border: '1px solid var(--line2)', borderRadius: 5, padding: '5px 8px' }}>
+          <option value="AUTO">AUTO (Binance → Bybit → OKX)</option>
+          <option value="BINANCE">BINANCE</option>
+          <option value="BYBIT">BYBIT</option>
+          <option value="OKX">OKX</option>
+        </select>
+        <b className="up">{s.activeSource}</b>
+      </div>
+      <div className="set-grid">
+        {([
+          ['riskPct', t('risk', lang) + ' %'], ['maxRiskPct', 'Max risk %'], ['maxDailyLossPct', 'Max daily loss %'],
+          ['maxExposurePct', 'Max exposure %'], ['maxLeverage', 'Max leverage'], ['minRR', 'Min R/R'], ['minConfidence', t('confidence', lang) + ' % min'],
+        ] as [string, string][]).map(([k, label]) => (
+          <label key={k} className="set-row"><span>{label}</span>
+            <input type="number" step="0.1" value={(s.risk as any)[k]} onChange={e => s.setRisk({ [k]: +e.target.value })} />
+          </label>
+        ))}
+      </div>
+      <div className="small muted note">Stored locally (this browser). Server-side multi-user auth requires the VPS deployment (see README).</div>
+      <button className="btn danger" onClick={() => { if (confirm('Reset paper account?')) s.resetPaper(); }}>Reset Paper Account</button>
+    </Panel>
+  );
+}
+
+function AdminScreen({ s, lang }: any) {
+  return (
+    <div>
+      <Panel title={t('admin', lang)}>
+        <div className="admin-grid">
+          <div><b>{t('agentCards', lang)} ({t('settings', lang)})</b>
+            <div className="small">NOVA 15% · ORION 15% · LUMA 20% · ATLAS 15% · GANN 5% · MACRO 10% · QUANT 20% · ARES = VETO</div>
+          </div>
+          <div><b>{t('liveTradeDisabled', lang)}</b><div className="small">{t('liveWarn', lang)}</div></div>
+          <div><b>{t('killSwitch', lang)}</b>
+            <div className="small">Audit: state={s.paper.killSwitch ? 'ACTIVE' : 'ARMED-OFF'} · journal {s.paper.journal.length} entries</div>
+          </div>
+        </div>
+      </Panel>
+      <Panel title="Audit Log">
+        <div className="of-list">
+          {s.paper.orders.slice(0, 20).map((o: any) => <div key={o.id} className="of-row mono">{new Date(o.createdAt).toISOString()} PAPER {o.symbol} {o.side} {o.qty.toFixed(5)} @ {o.fillPrice?.toFixed(2)} fee={o.feePaid.toFixed(4)}</div>)}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+function HealthScreen({ s, lang }: any) {
+  return (
+    <Panel title={t('systemHealth', lang)}>
+      <div className="health-grid">
+        <Health label={t('marketData', lang)} value={s.conn} ok={s.conn === 'LIVE'} />
+        <Health label={t('database', lang)} value={t('n_a_static', lang)} ok={false} />
+        <Health label={t('redis', lang)} value={t('n_a_static', lang)} ok={false} />
+        <Health label={t('aiEngine', lang)} value={s.consensus ? 'ONLINE' : 'PROCESSING'} ok={!!s.consensus} />
+        <Health label={t('execution', lang)} value="PAPER READY" ok={true} />
+        <Health label="Binance WS" value={s.conn === 'LIVE' ? 'CONNECTED' : s.conn} ok={s.conn === 'LIVE'} />
+        <Health label="Macro feeds" value={s.health.macroOk ? 'LIVE' : t('dataUnavailable', lang)} ok={s.health.macroOk} />
+        <Health label={t('latency', lang)} value={`${s.health.marketLatencyMs} ms / eng ${s.health.engineMs} ms`} ok={s.health.marketLatencyMs < 1000} />
+      </div>
+      <div className="small muted note">Static deployment on shared cPanel: server-side DB/Redis run on the VPS build (docker-compose in repo).</div>
+    </Panel>
+  );
+}
+
+function Health({ label, value, ok }: any) {
+  return <div className={`health-row ${ok ? 'ok' : 'warn'}`}><span>{label}</span><b>{value}</b></div>;
+}

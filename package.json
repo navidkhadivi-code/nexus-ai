@@ -1,0 +1,26 @@
+{
+  "name": "nexus-ai-terminal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "esbuild tests/engine.test.ts --bundle --platform=node --format=cjs --outfile=.tmp/engine.test.cjs --log-level=error && node .tmp/engine.test.cjs",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "lightweight-charts": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3"
+  }
+}
