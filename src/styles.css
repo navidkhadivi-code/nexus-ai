@@ -229,6 +229,8 @@ html[dir='ltr'] .guide-list { margin: 0 0 0 18px; }
 .boot-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(ellipse at 50% 30%, #0c1626 0%, #05080e 70%); padding: 16px; overflow-y: auto; }
 .req-wrap { display: flex; justify-content: center; }
 textarea.inp { resize: vertical; font-family: inherit; }
+.tg-link { color: #4f8cff; text-decoration: none; font-weight: 700; font-size: 12px; padding: 7px 12px; border: 1px solid #4f8cff44; border-radius: 8px; background: #4f8cff14; display: inline-block; text-align: center; }
+.tg-link:hover { background: #4f8cff26; }
 .login-card { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 30px 28px; width: 340px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
 .login-card .logo.big { width: 56px; height: 56px; font-size: 32px; margin: 0 auto; border-radius: 14px; }
 .login-card .brand-name { letter-spacing: 3px; font-size: 18px; }

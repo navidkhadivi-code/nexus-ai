@@ -133,7 +133,7 @@ const dict: Record<string, { en: string; fa: string }> = {
   plan3m: { en: '3 MONTHS', fa: '۳ ماهه' },
   expiredMsg: { en: 'Your subscription has expired. Renew (1 or 3 months) — contact the administrator.', fa: 'اشتراک شما به پایان رسیده. برای تمدید (۱ یا ۳ ماهه) با مدیر تماس بگیرید.' },
   disabledMsg: { en: 'Account is disabled — contact the administrator.', fa: 'حساب کاربری غیرفعال است — با مدیر تماس بگیرید.' },
-  plansInfo: { en: 'SUBSCRIPTIONS: 1-MONTH / 3-MONTH · purchase with digital currency · contact admin to get access', fa: 'اشتراک: ۱ ماهه / ۳ ماهه · پرداخت با ارز دیجیتال · برای دریافت دسترسی با مدیر تماس بگیرید' },
+  plansInfo: { en: 'SUBSCRIPTIONS: 1-MONTH / 3-MONTH · purchase with digital currency · @persiannetco1', fa: 'اشتراک: ۱ ماهه / ۳ ماهه · پرداخت با ارز دیجیتال · تلگرام مدیر: @persiannetco1' },
   paymentNote: { en: 'Create the account AFTER payment is received. Extension adds time to the current expiry. Disabled/expired users are kicked out automatically (≤60s).', fa: 'اکانت را بعد از دریافت پرداخت بسازید. تمدید به مهلت فعلی اضافه میکند. کاربران غیرفعال/منقضی خودکار خارج میشوند (حداکثر ۶۰ ثانیه).' },
   adminOnly: { en: 'Administrator access required.', fa: 'دسترسی مدیر نیاز است.' },
   dayUnit: { en: 'd', fa: 'روز' },
@@ -161,13 +161,14 @@ const dict: Record<string, { en: string; fa: string }> = {
   reqUsername: { en: 'Your username', fa: 'نام‌کاربری شما' },
   reqNote: { en: 'Note (optional)', fa: 'توضیح (اختیاری)' },
   reqSend: { en: 'SEND REQUEST', fa: 'ارسال درخواست' },
-  reqSent: { en: 'Request sent! We will contact you shortly via your given contact.', fa: 'درخواست شما ارسال شد! به‌زودی از طریق راه ارتباطی اعلامی با شما تماس می‌گیریم.' },
+  reqSent: { en: 'Request sent! We will contact you shortly. For faster response: Telegram @persiannetco1', fa: 'درخواست شما ارسال شد! به‌زودی با شما تماس می‌گیریم. برای پاسخ سریع‌تر: تلگرام @persiannetco1' },
   reqFillErr: { en: 'Name and contact are required.', fa: 'نام و راه ارتباطی الزامی است.' },
   cancel: { en: 'CANCEL', fa: 'انصراف' },
   requests: { en: 'Purchase Requests', fa: 'درخواست‌های خرید' },
   newWord: { en: 'NEW', fa: 'جدید' },
   type: { en: 'Type', fa: 'نوع' },
   emailOpt: { en: 'Email (activation email will be sent)', fa: 'ایمیل (برای ارسال ایمیل فعال‌سازی)' },
+  adminContact: { en: 'Contact Admin — Telegram', fa: 'تماس با مدیر — تلگرام' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {
