@@ -17,7 +17,7 @@ function daysLeft(exp: number, lang: Lang): string {
   return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
 }
 
-type Screen = 'dashboard' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
+type Screen = 'dashboard' | 'guide' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
 
 export default function App() {
   const s = useStore();
@@ -90,7 +90,7 @@ function Terminal({ s, lang }: any) {
   const structure = useMemo(() => s.candles.length > 60 ? analyzeStructure(s.candles) : null, [s.candles.length]);
 
   const NAV: { id: Screen; key: string }[] = [
-    { id: 'dashboard', key: 'dashboard' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
+    { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
     { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
     ...(s.auth?.role === 'ADMIN' ? [{ id: 'admin' as Screen, key: 'admin' }] : []), { id: 'health', key: 'systemHealth' },
@@ -144,6 +144,7 @@ function Terminal({ s, lang }: any) {
         <main className="main">
           {s.error && <div className="err-banner">{s.error}</div>}
           {screen === 'dashboard' && <Dashboard s={s} lang={lang} prefs={prefs} setPrefs={setPrefs} structure={structure} />}
+          {screen === 'guide' && <GuideScreen lang={lang} />}
           {screen === 'orderflow' && <OrderFlowScreen s={s} lang={lang} />}
           {screen === 'liquidity' && <LiquidityScreen s={s} lang={lang} structure={structure} />}
           {screen === 'ai' && <AiScreen s={s} lang={lang} />}
@@ -336,6 +337,87 @@ function portfolio(p: any) {
 
 function Metric({ label, value, tone, strong }: any) {
   return <div className={`metric ${tone ?? ''}`}><span>{label}</span><b className={strong ? 'big' : ''}>{value}</b></div>;
+}
+
+// ---------------- GUIDE (آموزش) ----------------
+const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; fa: string[] } }[] = [
+  {
+    icon: '📡', t: { en: 'Where are the signals?', fa: 'سیگنال‌ها کجا هستند؟' },
+    b: {
+      en: ['On the Dashboard, the right panel "AI CONSENSUS" shows the live signal: direction, entry zone, stop-loss and TP1/TP2/TP3.', 'The "Signals" menu shows the current signal status and its full history.', 'Statuses: WAITING (price has not reached entry yet) → ACTIVE → TP1/TP2/TP3 (targets hit) or STOP (stop-loss hit).'],
+      fa: ['در داشبورد، پنل سمت راست «اجماع هوش مصنوعی» سیگنال زنده را نشان می‌دهد: جهت، محدوده ورود، حد ضرر و هدف‌های ۱/۲/۳.', 'منوی «سیگنال‌ها» وضعیت سیگنال فعلی و تاریخچه کامل آن را نشان می‌دهد.', 'وضعیت‌ها: WAITING (قیمت هنوز به ورود نرسیده) ← ACTIVE ← TP1/TP2/TP3 (هدف‌ها زده شد) یا STOP (حد ضرر خورد).'],
+    },
+  },
+  {
+    icon: '🧠', t: { en: 'How to read a signal', fa: 'چطور سیگنال را بخوانیم' },
+    b: {
+      en: ['LONG = buy signal, SHORT = sell signal, NEUTRAL = no position.', 'Confidence: agreement strength of the 7 analysis agents (weighted).', 'R/R: reward-to-risk ratio — signals below 1.3 are never issued.', '"WHY?" section: every reason is computed from real data (structure, order flow, liquidity…), never invented.', 'Risks: what can invalidate the setup.'],
+      fa: ['LONG = سیگنال خرید، SHORT = سیگنال فروش، NEUTRAL = بدون پوزیشن.', 'Confidence: قدرت هم‌نظری ۷ ایجنت تحلیلی (وزن‌دار).', 'R/R: نسبت سود به ریسک — سیگنال زیر ۱.۳ هرگز صادر نمی‌شود.', 'بخش «چرا؟»: هر دلیل از داده واقعی محاسبه شده (ساختار، جریان سفارش، نقدینگی…)، هرگز ساخته نمی‌شود.', 'ریسک‌ها: چیزهایی که می‌توانند ستاپ را باطل کنند.'],
+    },
+  },
+  {
+    icon: '🚫', t: { en: 'NO TRADE is a real signal', fa: '«عدم معامله» هم یک سیگنال واقعی است' },
+    b: {
+      en: ['When data is stale, agents disagree, R/R is bad or volatility is extreme, the system shows NO TRADE and stops issuing signals.', 'This is a feature, not a bug: forcing low-quality signals is exactly what fake signal channels do.'],
+      fa: ['وقتی داده قدیمی باشد، ایجنت‌ها اختلاف نظر داشته باشند، R/R بد باشد یا نوسان شدید، سیستم NO TRADE نشان می‌دهد و صدور سیگنال متوقف می‌شود.', 'این یک قابلیت است نه نقص: سیگنال بی‌کیفیت دادن کاری است که کانال‌های جعلی انجام می‌دهند.'],
+    },
+  },
+  {
+    icon: '🤖', t: { en: 'The 8 agents', fa: 'ایجنت‌های هشت‌گانه' },
+    b: {
+      en: ['NOVA (structure) · ORION (price action) · LUMA (order flow) · ATLAS (liquidity) · GANN (price/time) · MACRO (market sentiment) · QUANT (statistics) — each votes with a weight.', 'ARES is the risk manager: it never predicts direction, but can VETO any trade (position size, daily loss, exposure, leverage limits).', 'The AI screen shows each agent\'s accuracy from real past signal outcomes.'],
+      fa: ['NOVA (ساختار) · ORION (پرایس اکشن) · LUMA (جریان سفارش) · ATLAS (نقدینگی) · GANN (قیمت/زمان) · MACRO (ماكرو) · QUANT (آمار) — هرکدام با وزن رأی می‌دهند.', 'ARES مدیر ریسک است: هرگز جهت پیش‌بینی نمی‌کند ولی می‌تواند هر معامله را وتو کند (حجم، ضرر روزانه، قرارگیری، اهرم).', 'صفحه هوش مصنوعی دقت هر ایجنت را از نتایج واقعی سیگنال‌های قبلی نشان می‌دهد.'],
+    },
+  },
+  {
+    icon: '🧪', t: { en: 'Paper trading (practice with real prices)', fa: 'معامله کاغذی (تمرین با قیمت واقعی)' },
+    b: {
+      en: ['The button "OPEN PAPER TRADE" on the dashboard becomes active only when consensus AND ARES approve.', 'Fills use the real bid/ask + slippage + 0.1% fee — like a real exchange, but with fake money ($10,000 test account).', 'Track open trades in "Positions", closed ones in "Journal" (CSV export available).', 'The red KILL SWITCH button closes everything and blocks new trades.'],
+      fa: ['دکمه «افتتاح معامله کاغذی» در داشبورد فقط وقتی فعال می‌شود که اجماع و ARES هر دو تأیید کنند.', 'اجرا با bid/ask واقعی + اسلیپیج + کارمزد ۰.۱٪ — مثل صرافی واقعی ولی با پول آزمایشی (حساب ۱۰ هزار دلاری).', 'معاملات باز در «معاملات باز» و بسته‌شده‌ها در «ژورنال» (خروجی CSV دارد).', 'دکمه قرمز «کلید اضطراری» همه را می‌بندد و معامله جدید را بلاک می‌کند.'],
+    },
+  },
+  {
+    icon: '📈', t: { en: 'Chart & timeframes', fa: 'چارت و تایم‌فریم‌ها' },
+    b: {
+      en: ['12 timeframes from 1m to 1w. Toggle overlays: EMA/BB/VWAP, BOS/CHOCH, liquidity levels, order blocks, Gann.', 'The top bar shows the live price, data source and latency. If it says STALE DATA — wait, signals are paused for your safety.'],
+      fa: ['۱۲ تایم‌فریم از ۱m تا ۱w. لایه‌ها قابل روشن/خاموش کردن: EMA/BB/VWAP، BOS/CHOCH، سطوح نقدینگی، اوردر بلاک، گن.', 'نوار بالا قیمت زنده، منبع داده و تأخیر را نشان می‌دهد. اگر STALE DATA دیدی — صبر کن، سیگنال‌ها برای امنیت تو متوقف شده‌اند.'],
+    },
+  },
+  {
+    icon: '🧾', t: { en: 'Backtest', fa: 'بک‌تست' },
+    b: {
+      en: ['The Backtest menu runs the strategy on thousands of real historical candles with fees and slippage, plus Monte Carlo and Walk-Forward tests.', 'Past results NEVER guarantee future profit — this tool measures risk, it does not promise income.'],
+      fa: ['منوی بک‌تست استراتژی را روی هزاران کندل تاریخی واقعی با کارمزد و اسلیپیج اجرا می‌کند به‌علاوه مونت‌کارلو و Walk-Forward.', 'نتایج گذشته هرگز سود آینده را تضمین نمی‌کند — این ابزار ریسک را می‌سنجد، وعده درآمد نمی‌دهد.'],
+    },
+  },
+  {
+    icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
+    b: {
+      en: ['Plans: 1-month and 3-month. The green badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message. For renewal contact the administrator.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
+      fa: ['پلن‌ها: ۱ ماهه و ۳ ماهه. بج سبز نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی. برای تمدید با مدیر تماس بگیرید.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
+    },
+  },
+  {
+    icon: '⚠️', t: { en: 'Important warning', fa: 'هشدار مهم' },
+    b: {
+      en: ['Crypto trading involves substantial risk of loss. NEXUS AI is an analysis terminal, not a profit machine. Never trade money you cannot afford to lose. Live (real-money) trading is disabled on this platform.'],
+      fa: ['معامله ارز دیجیتال ریسک از دست دادن سرمایه دارد. نکسوس یک ترمینال تحلیلی است، نه ماشین سود. هرگز با پولی که توان از دست دادنش را نداری معامله نکن. معامله واقعی (پول واقعی) در این پلتفرم غیرفعال است.'],
+    },
+  },
+];
+
+function GuideScreen({ lang }: any) {
+  return (
+    <div className="guide-wrap">
+      {GUIDE.map((g, i) => (
+        <Panel key={i} title={`${g.icon} ${g.t[lang as 'en' | 'fa']}`}>
+          <ul className="guide-list">
+            {g.b[lang as 'en' | 'fa'].map((line, j) => <li key={j}>{line}</li>)}
+          </ul>
+        </Panel>
+      ))}
+    </div>
+  );
 }
 
 // ---------------- OTHER SCREENS ----------------

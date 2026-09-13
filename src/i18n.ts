@@ -4,6 +4,7 @@ const dict: Record<string, { en: string; fa: string }> = {
   appTitle: { en: 'NEXUS AI', fa: 'نکسوس AI' },
   tagline: { en: 'Institutional Crypto Intelligence Terminal', fa: 'ترمینال هوش معاملاتی نهادی' },
   dashboard: { en: 'Dashboard', fa: 'داشبورد' },
+  guide: { en: 'Guide', fa: 'آموزش' },
   markets: { en: 'Markets', fa: 'بازارها' },
   chart: { en: 'Charts', fa: 'نمودار' },
   orderFlow: { en: 'Order Flow', fa: 'جریان سفارشات' },

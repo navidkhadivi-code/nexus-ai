@@ -208,6 +208,12 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 .health-row.warn b { color: var(--amber); }
 .health-row.na b { color: var(--muted); font-weight: 600; }
 
+/* guide */
+.guide-wrap { display: grid; gap: 12px; max-width: 900px; }
+.guide-list { margin: 0 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+html[dir='ltr'] .guide-list { margin: 0 0 0 18px; }
+.guide-list li { font-size: 12.5px; line-height: 1.7; color: var(--text); }
+
 /* status bar */
 .statusbar { display: flex; justify-content: space-between; gap: 14px; padding: 5px 14px; font-size: 10.5px; color: var(--muted); border-top: 1px solid var(--line2); background: var(--bg2); flex-wrap: wrap; }
 
