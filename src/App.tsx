@@ -120,9 +120,10 @@ function RequestPanel({ lang }: any) {
             <button type="button" className={`chip ${f.type === 'renew' ? 'on' : ''}`} onClick={() => set('type', 'renew')}>{t('reqRenew', lang)}</button>
           </div>
           <div className="mt-side">
-            <button type="button" className={`chip ${f.plan === '1m' ? 'on' : ''}`} onClick={() => set('plan', '1m')}>{t('plan1m', lang)}</button>
-            <button type="button" className={`chip ${f.plan === '3m' ? 'on' : ''}`} onClick={() => set('plan', '3m')}>{t('plan3m', lang)}</button>
+            <button type="button" className={`chip ${f.plan === '1m' ? 'on' : ''}`} onClick={() => set('plan', '1m')}>{t('plan1m', lang)} — {t('price1m', lang)}</button>
+            <button type="button" className={`chip ${f.plan === '3m' ? 'on' : ''}`} onClick={() => set('plan', '3m')}>{t('plan3m', lang)} — {t('price3m', lang)}</button>
           </div>
+          <div className="small muted">{t('payViaTg', lang)}</div>
           {f.type === 'renew' && <input className="inp" placeholder={t('reqUsername', lang)} value={f.username} onChange={e => set('username', e.target.value)} />}
           <textarea className="inp" rows={2} placeholder={t('reqNote', lang)} value={f.note} onChange={e => set('note', e.target.value)} />
           <input type="text" name="hp" tabIndex={-1} autoComplete="off" value={f.hp} onChange={e => set('hp', e.target.value)} style={{ display: 'none' }} />
@@ -448,8 +449,8 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
   {
     icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
     b: {
-      en: ['Plans: 1-month and 3-month. The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Purchase, renewal and support via Telegram: @persiannetco1', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
-      fa: ['پلن‌ها: ۱ ماهه و ۳ ماهه. بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'خرید، تمدید و پشتیبانی از طریق تلگرام: @persiannetco1', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
+      en: ['Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.', 'The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Payment: send a message to @persiannetco1 on Telegram to get the deposit address. After payment, your account is activated and login details are emailed to you.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
+      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiannetco1 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
     },
   },
   {
