@@ -123,8 +123,6 @@ function Terminal({ s, lang }: any) {
           {s.auth?.role === 'USER' && s.auth?.expires && (
             <span className="mode-badge plan" title={t('expires', lang)}>{t('plan', lang)}: {daysLeft(s.auth.expires, lang)}</span>
           )}
-          <span className="mode-badge paper">PAPER</span>
-          <span className="mode-badge off" title={t('liveWarn', lang)}>{t('liveTradeDisabled', lang)}</span>
           <span className="user-badge">{s.auth?.user}{s.auth?.role === 'ADMIN' ? ' ⚙' : ''}</span>
           <button className="lang-btn" onClick={() => void s.authLogout()}>{t('logout', lang)}</button>
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
