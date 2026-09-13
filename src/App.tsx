@@ -70,6 +70,10 @@ function LoginScreen({ s, lang }: any) {
         <div className="logo big">◈</div>
         <div className="brand-name">{t('appTitle', lang)}</div>
         <div className="muted small">{t('tagline', lang)}</div>
+        <div className="lang-row">
+          <button type="button" className={`chip ${lang === 'en' ? 'on' : ''}`} onClick={() => s.setLocale('en')}>English</button>
+          <button type="button" className={`chip ${lang === 'fa' ? 'on' : ''}`} onClick={() => s.setLocale('fa')}>فارسی</button>
+        </div>
         {s.auth.setupRequired && <div className="of-row warn">{t('createAdminFirst', lang)}</div>}
         <input className="inp" placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} autoComplete="username" autoFocus />
         <input className="inp" placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} autoComplete={s.auth.setupRequired ? 'new-password' : 'current-password'} />
@@ -449,8 +453,8 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
   {
     icon: '⚠️', t: { en: 'Important warning', fa: 'هشدار مهم' },
     b: {
-      en: ['Crypto trading involves substantial risk of loss. Persian Trade is an analysis terminal, not a profit machine. Never trade money you cannot afford to lose. Live (real-money) trading is disabled on this platform.'],
-      fa: ['معامله ارز دیجیتال ریسک از دست دادن سرمایه دارد. نکسوس یک ترمینال تحلیلی است، نه ماشین سود. هرگز با پولی که توان از دست دادنش را نداری معامله نکن. معامله واقعی (پول واقعی) در این پلتفرم غیرفعال است.'],
+      en: ['Crypto trading involves substantial risk of loss. Persian Net is an analysis terminal, not a profit machine. Never trade money you cannot afford to lose. Live (real-money) trading is disabled on this platform.', '★ IMPORTANT: If your monthly profit is 3–5%, YOU ARE A SUCCESSFUL TRADER. Do not turn yourself into a loser with greed — protect your capital first.'],
+      fa: ['معامله ارز دیجیتال ریسک از دست دادن سرمایه دارد. پرشین نت یک ترمینال تحلیلی است، نه ماشین سود. هرگز با پولی که توان از دست دادنش را نداری معامله نکن. معامله واقعی (پول واقعی) در این پلتفرم غیرفعال است.', '★ نکته مهم: اگر سود ماهانه شما ۳ تا ۵ درصد باشد، شما یک تریدر موفق هستید — با طمع کردن خودتان را بازنده نکنید؛ اول سرمایه‌تان را حفظ کنید.'],
     },
   },
 ];
