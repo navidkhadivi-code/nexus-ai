@@ -167,6 +167,7 @@ const dict: Record<string, { en: string; fa: string }> = {
   requests: { en: 'Purchase Requests', fa: 'درخواست‌های خرید' },
   newWord: { en: 'NEW', fa: 'جدید' },
   type: { en: 'Type', fa: 'نوع' },
+  emailOpt: { en: 'Email (activation email will be sent)', fa: 'ایمیل (برای ارسال ایمیل فعال‌سازی)' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {

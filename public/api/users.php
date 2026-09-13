@@ -37,6 +37,7 @@ function public_users($users) {
             'expires' => isset($rec['expires']) ? $rec['expires'] : null,
             'disabled' => !empty($rec['disabled']),
             'created' => isset($rec['created']) ? $rec['created'] : null,
+            'email' => isset($rec['email']) ? $rec['email'] : '',
         );
     }
     usort($out, function ($a, $b) { return strcmp($a['user'], $b['user']); });
@@ -52,6 +53,16 @@ function purge_user_sessions($username) {
     if ($changed) nexus_write('sessions', $sessions);
 }
 
+function user_mail($to, $subject, $lines) {
+    $body = "Persian Trade — ai.ipeset.com\n================================\n\n" . implode("\n", $lines) . "\n";
+    $headers = 'From: Persian Trade <trade@ipeset.com>' . "\r\n"
+        . 'Content-Type: text/plain; charset=UTF-8' . "\r\n"
+        . 'X-Mailer: PersianTrade-Notify';
+    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+}
+
+function plan_label($plan) { return $plan === '3m' ? '۳ ماهه (3 MONTHS)' : '۱ ماهه (1 MONTH)'; }
+
 if ($action === 'list') {
     nexus_respond(200, array('ok' => true, 'users' => public_users($users)));
 }
@@ -63,15 +74,48 @@ if ($action === 'create') {
     if (isset($users[$username])) nexus_respond(409, array('ok' => false, 'error' => 'Username already exists'));
     $password = isset($in['password']) ? (string)$in['password'] : '';
     $plan = isset($in['plan']) ? $in['plan'] : '1m';
+    $email = isset($in['email']) ? trim((string)$in['email']) : '';
+    $email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
     if (!isset($PLAN_SECS[$plan])) nexus_respond(400, array('ok' => false, 'error' => 'Plan must be 1m or 3m'));
     if (strlen($password) < 8) nexus_respond(400, array('ok' => false, 'error' => 'Password too short (min 8)'));
+    $exp = time() + $PLAN_SECS[$plan];
     $users[$username] = array(
         'hash' => password_hash($password, PASSWORD_DEFAULT), 'role' => 'USER', 'plan' => $plan,
-        'created' => time(), 'expires' => time() + $PLAN_SECS[$plan], 'disabled' => false,
+        'created' => time(), 'expires' => $exp, 'disabled' => false, 'email' => $email,
     );
     nexus_write('users', $users);
-    nexus_audit('user_create', $adminUser, $username . ' plan=' . $plan);
-    nexus_respond(200, array('ok' => true, 'users' => public_users($users)));
+    nexus_audit('user_create', $adminUser, $username . ' plan=' . $plan . ' email=' . $email);
+
+    // auto-close matching purchase requests
+    $requests = nexus_read('requests', array());
+    $changed = false;
+    foreach ($requests as $i => $r) {
+        if (isset($r['status']) && $r['status'] === 'new' && isset($r['username']) && strcasecmp($r['username'], $username) === 0) {
+            $requests[$i]['status'] = 'done';
+            $changed = true;
+        }
+    }
+    if ($changed) nexus_write('requests', array_values($requests));
+
+    // activation email to the buyer
+    if ($email !== '') {
+        user_mail($email, 'Persian Trade — حساب شما فعال شد / Account Activated', array(
+            'کاربر گرامی ' . $username . '، اشتراک شما فعال شد:',
+            '',
+            'نام‌کاربری: ' . $username,
+            'رمز عبور: ' . $password,
+            'اشتراک: ' . plan_label($plan) . ' — تا ' . gmdate('Y-m-d', $exp) . ' (UTC)',
+            '',
+            'آدرس ورود: https://ai.ipeset.com',
+            'با این مشخصات وارد شوید و از سیگنال‌های زنده استفاده کنید.',
+            '',
+            'Dear ' . $username . ', your subscription is now ACTIVE.',
+            'Login at https://ai.ipeset.com with username: ' . $username,
+            '',
+            '— Persian Trade',
+        ));
+    }
+    nexus_respond(200, array('ok' => true, 'users' => public_users($users), 'mailSent' => $email !== ''));
 }
 
 if (!isset($users[$username])) nexus_respond(404, array('ok' => false, 'error' => 'User not found'));
@@ -101,6 +145,16 @@ if ($action === 'extend') {
     $users[$username]['disabled'] = false;
     nexus_write('users', $users);
     nexus_audit('user_extend', $adminUser, $username . ' +' . $plan);
+    $em = isset($users[$username]['email']) ? $users[$username]['email'] : '';
+    if ($em !== '') {
+        user_mail($em, 'Persian Trade — اشتراک تمدید شد / Subscription Extended', array(
+            'نام‌کاربری: ' . $username,
+            'اشتراک جدید: ' . plan_label($plan) . ' — معتبر تا ' . gmdate('Y-m-d', $users[$username]['expires']) . ' (UTC)',
+            'ورود: https://ai.ipeset.com',
+            '',
+            'Your subscription has been extended until ' . gmdate('Y-m-d', $users[$username]['expires']) . ' UTC.',
+        ));
+    }
     nexus_respond(200, array('ok' => true, 'users' => public_users($users)));
 }
 if ($action === 'pass') {
@@ -110,6 +164,14 @@ if ($action === 'pass') {
     nexus_write('users', $users);
     purge_user_sessions($username);
     nexus_audit('user_password_reset', $adminUser, $username);
+    $em2 = isset($users[$username]['email']) ? $users[$username]['email'] : '';
+    if ($em2 !== '') {
+        user_mail($em2, 'Persian Trade — رمز جدید / New Password', array(
+            'نام‌کاربری: ' . $username,
+            'رمز عبور جدید: ' . $password,
+            'ورود: https://ai.ipeset.com',
+        ));
+    }
     nexus_respond(200, array('ok' => true));
 }
 if ($action === 'delete') {

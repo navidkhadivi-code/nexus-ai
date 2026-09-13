@@ -850,6 +850,7 @@ function UsersPanel({ lang }: any) {
   const [rows, setRows] = useState<any[]>([]);
   const [nu, setNu] = useState('');
   const [np, setNp] = useState('');
+  const [ne, setNe] = useState('');
   const [plan, setPlan] = useState('1m');
   const [busy, setBusy] = useState(false);
 
@@ -867,11 +868,12 @@ function UsersPanel({ lang }: any) {
 
   const createUser = async () => {
     setBusy(true);
-    const r = await adminApi.users('create', { username: nu, password: np, plan });
+    const r = await adminApi.users('create', { username: nu, password: np, plan, email: ne });
     setBusy(false);
     if (!r.ok) { alert(r.error ?? 'failed'); return; }
     setRows(Array.isArray(r.users) ? r.users : []);
-    setNu(''); setNp('');
+    if (ne && !r.mailSent) alert(lang === 'fa' ? 'اکانت ساخته شد ولی ایمیل ارسال نشد — مشخصات را دستی بفرستید.' : 'Account created but email was NOT sent — send credentials manually.');
+    setNu(''); setNp(''); setNe('');
   };
 
   return (
@@ -879,6 +881,7 @@ function UsersPanel({ lang }: any) {
       <div className="set-grid" style={{ maxWidth: 720, marginBottom: 12 }}>
         <input className="inp" placeholder={t('username', lang)} value={nu} onChange={e => setNu(e.target.value)} />
         <input className="inp" placeholder={t('password', lang) + ' (min 8)'} value={np} onChange={e => setNp(e.target.value)} />
+        <input className="inp" placeholder={t('emailOpt', lang)} value={ne} onChange={e => setNe(e.target.value)} />
         <select className="inp" value={plan} onChange={e => setPlan(e.target.value)}>
           <option value="1m">{t('plan1m', lang)}</option>
           <option value="3m">{t('plan3m', lang)}</option>
@@ -886,7 +889,7 @@ function UsersPanel({ lang }: any) {
         <button className="btn primary" disabled={busy || nu.length < 3 || np.length < 8} onClick={() => void createUser()}>{t('createUser', lang)}</button>
       </div>
       <table className="tbl">
-        <thead><tr><th>{t('username', lang)}</th><th>{t('plan', lang)}</th><th>{t('expires', lang)}</th><th>{t('status', lang)}</th><th></th></tr></thead>
+        <thead><tr><th>{t('username', lang)}</th><th>{t('plan', lang)}</th><th>{t('expires', lang)}</th><th>{t('status', lang)}</th><th>Email</th><th></th></tr></thead>
         <tbody>
           {rows.map(r => (
             <tr key={r.user}>
@@ -894,6 +897,7 @@ function UsersPanel({ lang }: any) {
               <td>{r.plan ?? '—'}</td>
               <td>{r.expires ? daysLeft(r.expires, lang) : '∞'}</td>
               <td className={r.disabled ? 'down' : 'up'}>{r.disabled ? t('disabledWord', lang) : t('active', lang)}</td>
+              <td className="small mono">{r.email || '—'}</td>
               <td className="btns">
                 {r.role !== 'ADMIN' && r.role !== 'SUPER_ADMIN' && (
                   <>
@@ -909,7 +913,7 @@ function UsersPanel({ lang }: any) {
               </td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={5} className="empty">{t('noData', lang)}</td></tr>}
+          {!rows.length && <tr><td colSpan={6} className="empty">{t('noData', lang)}</td></tr>}
         </tbody>
       </table>
       <div className="small muted note">{t('paymentNote', lang)}</div>
