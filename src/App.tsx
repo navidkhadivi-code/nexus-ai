@@ -187,8 +187,8 @@ function Dashboard({ s, lang, prefs, setPrefs, structure }: any) {
           ))}
         </div>
         <div className="pref-row">
-          {(['ema20', 'ema50', 'bb', 'vwap', 'bos', 'liquidity', 'ob', 'gann'] as (keyof ChartPrefs)[]).map(k => (
-            <label key={k} className="pref"><input type="checkbox" checked={(prefs as any)[k]} onChange={() => setPrefs({ ...prefs, [k]: !(prefs as any)[k] })} />{k}</label>
+          {(['ema20', 'ema50', 'bb', 'vwap', 'bos', 'liquidity', 'fvg', 'ob', 'gann'] as (keyof ChartPrefs)[]).map(k => (
+            <label key={k} className="pref"><input type="checkbox" checked={(prefs as any)[k]} onChange={() => setPrefs({ ...prefs, [k]: !(prefs as any)[k] })} />{({ ema20: 'EMA20', ema50: 'EMA50', bb: 'Bollinger', vwap: 'VWAP', bos: 'BOS/CHoCH', liquidity: 'Liquidity', fvg: 'FVG', ob: 'Order Blocks', gann: 'Gann' } as Record<string, string>)[k]}</label>
           ))}
         </div>
         <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann} tf={s.timeframe}

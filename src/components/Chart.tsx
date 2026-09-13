@@ -93,7 +93,19 @@ export default function Chart({ candles, prefs, consensus, structure, liquidity,
       if (liquidity.poc) addPriceLine(liquidity.poc, '#5ac8fa', 'POC', LineStyle.Solid);
     }
     if (prefs.ob && liquidity) {
-      for (const ob of liquidity.orderBlocks.slice(-5)) { addPriceLine(ob.top, ob.type === 'BULL' ? 'rgba(14,203,129,.5)' : 'rgba(246,70,93,.5)', 'OB', LineStyle.Dotted); }
+      for (const ob of liquidity.orderBlocks.slice(-5)) {
+        const col = ob.type === 'BULL' ? 'rgba(14,203,129,.8)' : 'rgba(246,70,93,.8)';
+        const tag = ob.type === 'BULL' ? 'OB↑' : 'OB↓';
+        addPriceLine(ob.top, col, tag, LineStyle.Solid);
+        addPriceLine(ob.bottom, col, '', LineStyle.Dotted);
+      }
+    }
+    if (prefs.fvg && liquidity) {
+      for (const f of liquidity.fvgs.slice(-6)) {
+        const col = f.type === 'BULL' ? 'rgba(90,200,250,.65)' : 'rgba(255,140,90,.65)';
+        addPriceLine(f.top, col, f.type === 'BULL' ? 'FVG↑' : 'FVG↓', LineStyle.Dotted);
+        addPriceLine(f.bottom, col, '', LineStyle.Dotted);
+      }
     }
     if (prefs.gann && gann) {
       for (const l of gann.levels.filter(x => x.strength > 0.2).slice(0, 6)) addPriceLine(l.price, 'rgba(255,179,71,.45)', `GANN ${l.angle}`, LineStyle.Dotted);
