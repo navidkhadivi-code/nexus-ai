@@ -11,8 +11,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
-        entryFileNames: 'nexus.js',
-        assetFileNames: 'nexus[extname]',
+        entryFileNames: 'nexus.[hash].js',
+        assetFileNames: 'nexus.[hash][extname]',
       },
     },
   },
