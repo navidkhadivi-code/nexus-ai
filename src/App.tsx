@@ -6,8 +6,9 @@ import { analyzeStructure } from './engine/structure';
 import { TIMEFRAMES, type Timeframe } from './api/binance';
 import { exportCsv } from './paper/engine';
 import { adminApi } from './api/adminClient';
+import { fetchCommodities } from './api/commodities';
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'PAXGUSDT'];
 
 function daysLeft(exp: number, lang: Lang): string {
   const ms = exp - Date.now();
@@ -17,7 +18,7 @@ function daysLeft(exp: number, lang: Lang): string {
   return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
 }
 
-type Screen = 'dashboard' | 'guide' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
+type Screen = 'dashboard' | 'guide' | 'commodities' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
 
 export default function App() {
   const s = useStore();
@@ -146,7 +147,7 @@ function Terminal({ s, lang }: any) {
   const structure = useMemo(() => s.candles.length > 60 ? analyzeStructure(s.candles) : null, [s.candles.length]);
 
   const NAV: { id: Screen; key: string }[] = [
-    { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
+    { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'commodities', key: 'commodities' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
     { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
     ...(s.auth?.role === 'ADMIN' ? [{ id: 'admin' as Screen, key: 'admin' }] : []), { id: 'health', key: 'systemHealth' },
@@ -203,6 +204,7 @@ function Terminal({ s, lang }: any) {
           {s.error && <div className="err-banner">{s.error}</div>}
           {screen === 'dashboard' && <Dashboard s={s} lang={lang} prefs={prefs} setPrefs={setPrefs} structure={structure} />}
           {screen === 'guide' && <GuideScreen lang={lang} />}
+          {screen === 'commodities' && <CommoditiesScreen lang={lang} />}
           {screen === 'orderflow' && <OrderFlowScreen s={s} lang={lang} />}
           {screen === 'liquidity' && <LiquidityScreen s={s} lang={lang} structure={structure} />}
           {screen === 'ai' && <AiScreen s={s} lang={lang} />}
@@ -475,6 +477,80 @@ function GuideScreen({ lang }: any) {
           </ul>
         </Panel>
       ))}
+    </div>
+  );
+}
+
+function CommoditiesScreen({ lang }: any) {
+  const [px, setPx] = useState<Record<string, any> | null>(null);
+  const [hist, setHist] = useState<Record<string, { t: number; p: number }[]>>(() => {
+    try { return JSON.parse(localStorage.getItem('nexus_cmdty') || '{}'); } catch { return {}; }
+  });
+
+  useEffect(() => {
+    let stop = false;
+    const poll = async () => {
+      const d = await fetchCommodities().catch(() => null);
+      if (!d || stop) return;
+      setPx(d);
+      setHist(h => {
+        const n = { ...h };
+        for (const k of Object.keys(d)) {
+          const arr = [...(n[k] || []), { t: Date.now(), p: d[k].price }];
+          if (arr.length > 2000) arr.splice(0, arr.length - 2000);
+          n[k] = arr;
+        }
+        try { localStorage.setItem('nexus_cmdty', JSON.stringify(n)); } catch { /* quota */ }
+        return n;
+      });
+    };
+    void poll();
+    const id = window.setInterval(() => void poll(), 30000);
+    return () => { stop = true; clearInterval(id); };
+  }, []);
+
+  const cards = [
+    { key: 'XAU', fa: 'طلا', en: 'Gold (XAU/USD)', unit: '/oz' },
+    { key: 'XAG', fa: 'نقره', en: 'Silver (XAG/USD)', unit: '/oz' },
+    { key: 'HG', fa: 'مس', en: 'Copper (HG/USD)', unit: '/lb' },
+  ];
+
+  return (
+    <div>
+      <div className="cmdty-grid">
+        {cards.map(c => {
+          const q = px?.[c.key];
+          const pts = hist[c.key] || [];
+          const first = pts[0]?.p, last = pts[pts.length - 1]?.p;
+          const chg = first && last ? ((last - first) / first) * 100 : null;
+          const min = Math.min(...pts.map(p => p.p), Infinity), max = Math.max(...pts.map(p => p.p), -Infinity);
+          const spark = pts.length > 1 && isFinite(min) && max > min
+            ? pts.map((p, i) => `${(i / (pts.length - 1)) * 100},${100 - ((p.p - min) / (max - min)) * 100}`).join(' ')
+            : '';
+          return (
+            <div key={c.key} className="panel cmdty-card">
+              <div className="cmdty-name">{lang === 'fa' ? c.fa : c.en}</div>
+              <div className="cmdty-price">{q ? fmt(q.price, 2, lang) + ' $' + c.unit : (px ? t('dataUnavailable', lang) : '…')}</div>
+              <div className={`cmdty-chg ${chg == null ? '' : chg >= 0 ? 'up' : 'down'}`}>
+                {chg == null ? '—' : `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}% · ${pts.length} ${t('samplesWord', lang)}`}
+              </div>
+              {spark && <svg className="cmdty-spark" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points={spark} fill="none" stroke={chg != null && chg < 0 ? '#f6465d' : '#0ecb81'} strokeWidth="1.5" vectorEffect="non-scaling-stroke" /></svg>}
+            </div>
+          );
+        })}
+        <div className="panel cmdty-card">
+          <div className="cmdty-name">{lang === 'fa' ? 'نفت' : 'Oil (WTI/Brent)'}</div>
+          <div className="cmdty-price na">{t('dataUnavailable', lang)}</div>
+          <div className="small muted" style={{ marginTop: 6 }}>{t('oilNote', lang)}</div>
+        </div>
+      </div>
+      <div className="panel" style={{ marginTop: 12 }}>
+        <div className="panel-h">{t('goldTerminal', lang)}</div>
+        <div className="panel-b">
+          <div className="small muted">{t('goldHowTo', lang)}</div>
+        </div>
+      </div>
+      <div className="small muted note">{t('cmdtyPollNote', lang)}</div>
     </div>
   );
 }

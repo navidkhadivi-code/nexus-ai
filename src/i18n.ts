@@ -173,6 +173,12 @@ const dict: Record<string, { en: string; fa: string }> = {
   emailOpt: { en: 'Email (activation email will be sent)', fa: 'ایمیل (برای ارسال ایمیل فعال‌سازی)' },
   adminContact: { en: 'Contact Admin — Telegram', fa: 'تماس با مدیر — تلگرام' },
   daysLeftWord: { en: 'days left', fa: 'روز مانده' },
+  commodities: { en: 'Commodities', fa: 'کالاها' },
+  samplesWord: { en: 'samples', fa: 'نمونه' },
+  oilNote: { en: 'No free browser-accessible oil feed exists on this deployment. It can be enabled with a free API key (gold-api / api-ninjas). We show DATA UNAVAILABLE rather than fake numbers.', fa: 'فید رایگان قابل‌دسترس از مرورگر برای نفت موجود نیست (نیازمند کلید رایگان gold-api / api-ninjas). بجای عدد ساختگی، «داده در دسترس نیست» نمایش داده می‌شود.' },
+  goldTerminal: { en: 'Gold on the terminal', fa: 'طلا در ترمینال' },
+  goldHowTo: { en: 'For full candlestick chart, order book, signals and paper trading of gold: select PAXGUSDT in the top bar (tokenized gold, 1 PAXG = 1 fine oz, real Binance market).', fa: 'برای چارت کندلی کامل، دفتر سفارشات، سیگنال و پیپر ترید طلا: از نوار بالا PAXGUSDT را انتخاب کنید (طلای توکنیزه‌شده، هر PAXG = یک اونس طلای خالص، بازار واقعی بایننس).' },
+  cmdtyPollNote: { en: 'Spot prices are REAL (gold-api) sampled every 30s. The chart line only shows actually-collected samples — nothing is invented.', fa: 'قیمت‌های لحظه‌ای واقعی‌اند (gold-api) و هر ۳۰ ثانیه نمونه‌برداری می‌شوند. نمودار فقط نمونه‌های واقعاً جمع‌آوری‌شده را نشان می‌دهد — هیچ چیز ساخته نمی‌شود.' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {

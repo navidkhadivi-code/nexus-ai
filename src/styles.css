@@ -232,6 +232,15 @@ textarea.inp { resize: vertical; font-family: inherit; }
 .tg-link { color: #4f8cff; text-decoration: none; font-weight: 700; font-size: 12px; padding: 7px 12px; border: 1px solid #4f8cff44; border-radius: 8px; background: #4f8cff14; display: inline-block; text-align: center; }
 .tg-link:hover { background: #4f8cff26; }
 .lang-row { display: flex; gap: 6px; justify-content: center; }
+
+/* commodities */
+.cmdty-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.cmdty-card { padding: 16px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; }
+.cmdty-name { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+.cmdty-price { font-size: 22px; font-weight: 800; margin: 6px 0 2px; }
+.cmdty-price.na { font-size: 14px; color: var(--amber); }
+.cmdty-chg { font-size: 11px; color: var(--muted); }
+.cmdty-spark { width: 100%; height: 54px; margin-top: 8px; }
 .login-card { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 30px 28px; width: 340px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
 .login-card .logo.big { width: 56px; height: 56px; font-size: 32px; margin: 0 auto; border-radius: 14px; }
 .login-card .brand-name { letter-spacing: 3px; font-size: 18px; }

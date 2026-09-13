@@ -135,6 +135,8 @@ interface State {
 type SetPartial = (p: Partial<State> | ((st: State) => Partial<State>)) => void;
 
 const ADAPTERS: Record<string, ExchangeAdapter> = { BINANCE: binanceAdapter, BYBIT: bybitAdapter, OKX: okxAdapter };
+const savedLocale: 'en' | 'fa' = (() => { try { return (localStorage.getItem('nexus_locale') === 'en' ? 'en' : 'fa'); } catch { return 'fa'; } })();
+try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; } catch { /* pre-DOM */ }
 const ofEngine = new OrderFlowEngine();
 let gateway: MarketGateway | null = null;
 let currentAdapter: ExchangeAdapter = binanceAdapter;
@@ -197,7 +199,7 @@ export const useStore = create<State>((set, get) => ({
   timeframe: '15m',
   exchange: 'AUTO',
   activeSource: 'â€”',
-  locale: 'en',
+  locale: savedLocale,
   candles: [],
   tick: null,
   book: null,
@@ -267,6 +269,7 @@ export const useStore = create<State>((set, get) => ({
 
   setLocale: (l) => {
     set({ locale: l });
+    try { localStorage.setItem('nexus_locale', l); } catch { /* noop */ }
     document.documentElement.dir = l === 'fa' ? 'rtl' : 'ltr';
     document.documentElement.lang = l;
   },
