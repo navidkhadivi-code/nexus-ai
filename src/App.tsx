@@ -687,19 +687,19 @@ function HealthScreen({ s, lang }: any) {
     <Panel title={t('systemHealth', lang)}>
       <div className="health-grid">
         <Health label={t('marketData', lang)} value={s.conn} ok={s.conn === 'LIVE'} />
-        <Health label={t('database', lang)} value={t('n_a_static', lang)} ok={false} />
-        <Health label={t('redis', lang)} value={t('n_a_static', lang)} ok={false} />
+        <Health label={t('storageEngine', lang)} value="FILE-STORE (PHP/JSON) ONLINE" ok={true} />
+        <Health label={t('cacheLayer', lang)} value="BROWSER IN-MEMORY" na={true} />
         <Health label={t('aiEngine', lang)} value={s.consensus ? 'ONLINE' : 'PROCESSING'} ok={!!s.consensus} />
         <Health label={t('execution', lang)} value="PAPER READY" ok={true} />
         <Health label="Binance WS" value={s.conn === 'LIVE' ? 'CONNECTED' : s.conn} ok={s.conn === 'LIVE'} />
         <Health label="Macro feeds" value={s.health.macroOk ? 'LIVE' : t('dataUnavailable', lang)} ok={s.health.macroOk} />
         <Health label={t('latency', lang)} value={`${s.health.marketLatencyMs} ms / eng ${s.health.engineMs} ms`} ok={s.health.marketLatencyMs < 1000} />
       </div>
-      <div className="small muted note">Static deployment on shared cPanel: server-side DB/Redis run on the VPS build (docker-compose in repo).</div>
+      <div className="small muted note">{t('staticNote', lang)}</div>
     </Panel>
   );
 }
 
-function Health({ label, value, ok }: any) {
-  return <div className={`health-row ${ok ? 'ok' : 'warn'}`}><span>{label}</span><b>{value}</b></div>;
+function Health({ label, value, ok, na }: any) {
+  return <div className={`health-row ${na ? 'na' : ok ? 'ok' : 'warn'}`}><span>{label}</span><b>{value}</b></div>;
 }

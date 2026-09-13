@@ -206,6 +206,7 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 .health-row { display: flex; justify-content: space-between; padding: 9px 12px; border-radius: 7px; background: var(--panel2); border: 1px solid var(--line2); font-size: 12px; }
 .health-row.ok b { color: var(--up); }
 .health-row.warn b { color: var(--amber); }
+.health-row.na b { color: var(--muted); font-weight: 600; }
 
 /* status bar */
 .statusbar { display: flex; justify-content: space-between; gap: 14px; padding: 5px 14px; font-size: 10.5px; color: var(--muted); border-top: 1px solid var(--line2); background: var(--bg2); flex-wrap: wrap; }
