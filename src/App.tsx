@@ -77,6 +77,55 @@ function LoginScreen({ s, lang }: any) {
         <button className="btn primary" disabled={busy || !u || p.length < 8}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
         <div className="small muted">{t('plansInfo', lang)}</div>
       </form>
+      <RequestPanel lang={lang} />
+    </div>
+  );
+}
+
+function RequestPanel({ lang }: any) {
+  const [open, setOpen] = useState(false);
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [f, setF] = useState({ name: '', contact: '', type: 'buy', plan: '1m', username: '', note: '', hp: '' });
+  const set = (k: string, v: string) => setF(x => ({ ...x, [k]: v }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); setErr('');
+    if (f.name.length < 2 || f.contact.length < 5) { setErr(t('reqFillErr', lang)); return; }
+    setBusy(true);
+    const r = await adminApi.contact(f);
+    setBusy(false);
+    if (r.ok) setDone(true); else setErr(r.error ?? 'failed');
+  };
+
+  if (done) return <div className="login-card"><div style={{ fontSize: 34 }}>✅</div><div>{t('reqSent', lang)}</div></div>;
+
+  return (
+    <div className="req-wrap">
+      {!open ? (
+        <button className="btn primary" onClick={() => setOpen(true)}>🛒 {t('requestBtn', lang)}</button>
+      ) : (
+        <form className="login-card" onSubmit={submit}>
+          <div className="brand-name" style={{ fontSize: 14, letterSpacing: 1 }}>{t('requestTitle', lang)}</div>
+          <input className="inp" placeholder={t('reqName', lang)} value={f.name} onChange={e => set('name', e.target.value)} />
+          <input className="inp" placeholder={t('reqContact', lang)} value={f.contact} onChange={e => set('contact', e.target.value)} />
+          <div className="mt-side">
+            <button type="button" className={`chip ${f.type === 'buy' ? 'on' : ''}`} onClick={() => set('type', 'buy')}>{t('reqBuy', lang)}</button>
+            <button type="button" className={`chip ${f.type === 'renew' ? 'on' : ''}`} onClick={() => set('type', 'renew')}>{t('reqRenew', lang)}</button>
+          </div>
+          <div className="mt-side">
+            <button type="button" className={`chip ${f.plan === '1m' ? 'on' : ''}`} onClick={() => set('plan', '1m')}>{t('plan1m', lang)}</button>
+            <button type="button" className={`chip ${f.plan === '3m' ? 'on' : ''}`} onClick={() => set('plan', '3m')}>{t('plan3m', lang)}</button>
+          </div>
+          {f.type === 'renew' && <input className="inp" placeholder={t('reqUsername', lang)} value={f.username} onChange={e => set('username', e.target.value)} />}
+          <textarea className="inp" rows={2} placeholder={t('reqNote', lang)} value={f.note} onChange={e => set('note', e.target.value)} />
+          <input type="text" name="hp" tabIndex={-1} autoComplete="off" value={f.hp} onChange={e => set('hp', e.target.value)} style={{ display: 'none' }} />
+          {err && <div className="of-row warn">{err}</div>}
+          <button className="btn primary" disabled={busy}>{busy ? '…' : t('reqSend', lang)}</button>
+          <button type="button" className="btn" onClick={() => setOpen(false)}>{t('cancel', lang)}</button>
+        </form>
+      )}
     </div>
   );
 }
@@ -742,6 +791,7 @@ function AdminScreen({ s, lang }: any) {
 
   return (
     <div>
+      <RequestsPanel lang={lang} />
       <UsersPanel lang={lang} />
       <Panel title={`${t('admin', lang)} — ${s.auth.user}`}>
         <div className="admin-grid">
@@ -758,6 +808,41 @@ function AdminScreen({ s, lang }: any) {
         </div>
       </Panel>
     </div>
+  );
+}
+
+function RequestsPanel({ lang }: any) {
+  const [rows, setRows] = useState<any[]>([]);
+  const refresh = () => adminApi.requests('list').then(r => setRows(Array.isArray(r.requests) ? r.requests : []));
+  useEffect(() => { void refresh(); }, []);
+  const act = async (action: string, id: string) => {
+    const r = await adminApi.requests(action, { id });
+    if (Array.isArray(r.requests)) setRows(r.requests); else void refresh();
+  };
+  const newCount = rows.filter(r => r.status === 'new').length;
+  return (
+    <Panel title={`${t('requests', lang)} — ${newCount} ${t('newWord', lang)}`}>
+      <table className="tbl">
+        <thead><tr><th>{t('time', lang)}</th><th>{t('type', lang)}</th><th>{t('plan', lang)}</th><th>{t('reqName', lang)}</th><th>{t('reqContact', lang)}</th><th>Note</th><th>{t('status', lang)}</th><th></th></tr></thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.id}>
+              <td>{new Date(r.ts * 1000).toLocaleString()}</td>
+              <td className={r.type === 'buy' ? 'up' : ''}>{r.type === 'buy' ? t('reqBuy', lang) : t('reqRenew', lang)}{r.username ? ` (${r.username})` : ''}</td>
+              <td>{r.plan === '1m' ? t('plan1m', lang) : t('plan3m', lang)}</td>
+              <td>{r.name}</td><td className="mono">{r.contact}</td>
+              <td className="small">{r.note || '—'}</td>
+              <td className={r.status === 'new' ? 'up' : 'muted'}>{r.status === 'new' ? t('newWord', lang) : '✓'}</td>
+              <td className="btns">
+                {r.status === 'new' && <button className="btn small" onClick={() => void act('done', r.id)}>✓</button>}
+                <button className="btn small danger" onClick={() => { if (confirm('delete request?')) void act('delete', r.id); }}>✕</button>
+              </td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colSpan={8} className="empty">{t('noData', lang)}</td></tr>}
+        </tbody>
+      </table>
+    </Panel>
   );
 }
 

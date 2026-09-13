@@ -152,6 +152,21 @@ const dict: Record<string, { en: string; fa: string }> = {
   autoBtNote: { en: 'Auto mode re-runs the backtest every 5 minutes on the current symbol/timeframe and keeps the last results visible between runs.', fa: 'در حالت خودکار، بک‌تست هر ۵ دقیقه روی نماد/تایم فعلی دوباره اجرا می‌شود و تا اجرای بعدی، آخرین نتایج نمایش داده می‌شود.' },
   manualSlTpNote: { en: 'Manual trades fill instantly at live bid/ask + slippage + fee; SL/TP are monitored on real quotes just like signals.', fa: 'معاملات دستی آنی روی bid/ask زنده + اسلیپیج + کارمزد اجرا می‌شوند؛ حد ضرر/هدف مثل سیگنال روی قیمت واقعی پایش می‌شوند.' },
   candlesWord: { en: 'historical candles', fa: 'کندل تاریخی' },
+  requestBtn: { en: 'REQUEST PURCHASE / RENEWAL', fa: 'درخواست خرید / تمدید اکانت' },
+  requestTitle: { en: 'ACCOUNT REQUEST', fa: 'درخواست اکانت' },
+  reqName: { en: 'Your name', fa: 'نام شما' },
+  reqContact: { en: 'Contact (Telegram / phone / email)', fa: 'راه ارتباطی (تلگرام / تلفن / ایمیل)' },
+  reqBuy: { en: 'BUY', fa: 'خرید' },
+  reqRenew: { en: 'RENEW', fa: 'تمدید' },
+  reqUsername: { en: 'Your username', fa: 'نام‌کاربری شما' },
+  reqNote: { en: 'Note (optional)', fa: 'توضیح (اختیاری)' },
+  reqSend: { en: 'SEND REQUEST', fa: 'ارسال درخواست' },
+  reqSent: { en: 'Request sent! We will contact you shortly via your given contact.', fa: 'درخواست شما ارسال شد! به‌زودی از طریق راه ارتباطی اعلامی با شما تماس می‌گیریم.' },
+  reqFillErr: { en: 'Name and contact are required.', fa: 'نام و راه ارتباطی الزامی است.' },
+  cancel: { en: 'CANCEL', fa: 'انصراف' },
+  requests: { en: 'Purchase Requests', fa: 'درخواست‌های خرید' },
+  newWord: { en: 'NEW', fa: 'جدید' },
+  type: { en: 'Type', fa: 'نوع' },
 };
 
 export function t(key: keyof typeof dict | string, lang: Lang): string {

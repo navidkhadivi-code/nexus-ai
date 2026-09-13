@@ -226,7 +226,9 @@ html[dir='ltr'] .guide-list { margin: 0 0 0 18px; }
 .statusbar { display: flex; justify-content: space-between; gap: 14px; padding: 5px 14px; font-size: 10.5px; color: var(--muted); border-top: 1px solid var(--line2); background: var(--bg2); flex-wrap: wrap; }
 
 /* login gate */
-.boot-screen { height: 100vh; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 30%, #0c1626 0%, #05080e 70%); padding: 16px; }
+.boot-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(ellipse at 50% 30%, #0c1626 0%, #05080e 70%); padding: 16px; overflow-y: auto; }
+.req-wrap { display: flex; justify-content: center; }
+textarea.inp { resize: vertical; font-family: inherit; }
 .login-card { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 30px 28px; width: 340px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
 .login-card .logo.big { width: 56px; height: 56px; font-size: 32px; margin: 0 auto; border-radius: 14px; }
 .login-card .brand-name { letter-spacing: 3px; font-size: 18px; }
