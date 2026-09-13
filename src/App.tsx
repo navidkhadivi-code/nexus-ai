@@ -18,7 +18,7 @@ function daysLeft(exp: number, lang: Lang): string {
   return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
 }
 
-type Screen = 'dashboard' | 'guide' | 'commodities' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
+type Screen = 'dashboard' | 'guide' | 'commodities' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'users' | 'requests' | 'health';
 
 export default function App() {
   const s = useStore();
@@ -150,7 +150,11 @@ function Terminal({ s, lang }: any) {
     { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'commodities', key: 'commodities' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
     { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
-    ...(s.auth?.role === 'ADMIN' ? [{ id: 'admin' as Screen, key: 'admin' }] : []), { id: 'health', key: 'systemHealth' },
+    ...(s.auth?.role === 'ADMIN' ? [
+      { id: 'admin' as Screen, key: 'admin' },
+      { id: 'users' as Screen, key: 'usersNav' },
+      { id: 'requests' as Screen, key: 'requestsNav' },
+    ] : []), { id: 'health', key: 'systemHealth' },
   ];
 
   return (
@@ -214,6 +218,8 @@ function Terminal({ s, lang }: any) {
           {screen === 'journal' && <JournalScreen s={s} lang={lang} />}
           {screen === 'settings' && <SettingsScreen s={s} lang={lang} />}
           {screen === 'admin' && <AdminScreen s={s} lang={lang} />}
+          {screen === 'users' && <UsersScreen lang={lang} />}
+          {screen === 'requests' && <RequestsScreen lang={lang} />}
           {screen === 'health' && <HealthScreen s={s} lang={lang} />}
         </main>
       </div>
@@ -879,8 +885,6 @@ function AdminScreen({ s, lang }: any) {
 
   return (
     <div>
-      <RequestsPanel lang={lang} />
-      <UsersPanel lang={lang} />
       <Panel title={`${t('admin', lang)} — ${s.auth.user}`}>
         <div className="admin-grid">
           <div><b>{t('agentCards', lang)} ({t('settings', lang)})</b>
@@ -897,6 +901,18 @@ function AdminScreen({ s, lang }: any) {
       </Panel>
     </div>
   );
+}
+
+function UsersScreen({ lang }: any) {
+  const auth = useStore.getState().auth;
+  if (auth.role !== 'ADMIN') return <Panel title={t('users', lang)}><div className="of-row warn">{t('adminOnly', lang)}</div></Panel>;
+  return <div><UsersPanel lang={lang} /></div>;
+}
+
+function RequestsScreen({ lang }: any) {
+  const auth = useStore.getState().auth;
+  if (auth.role !== 'ADMIN') return <Panel title={t('requests', lang)}><div className="of-row warn">{t('adminOnly', lang)}</div></Panel>;
+  return <div><RequestsPanel lang={lang} /></div>;
 }
 
 function RequestsPanel({ lang }: any) {

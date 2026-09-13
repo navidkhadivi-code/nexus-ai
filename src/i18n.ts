@@ -168,6 +168,8 @@ const dict: Record<string, { en: string; fa: string }> = {
   reqFillErr: { en: 'Name and a valid email are required.', fa: 'نام و یک ایمیل معتبر الزامی است.' },
   cancel: { en: 'CANCEL', fa: 'انصراف' },
   requests: { en: 'Purchase Requests', fa: 'درخواست‌های خرید' },
+  usersNav: { en: 'Users', fa: 'کاربران' },
+  requestsNav: { en: 'Requests', fa: 'درخواست‌ها' },
   newWord: { en: 'NEW', fa: 'جدید' },
   type: { en: 'Type', fa: 'نوع' },
   emailOpt: { en: 'Email (activation email will be sent)', fa: 'ایمیل (برای ارسال ایمیل فعال‌سازی)' },
