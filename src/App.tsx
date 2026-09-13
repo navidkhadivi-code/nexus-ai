@@ -544,11 +544,6 @@ function CommoditiesScreen({ lang }: any) {
             </div>
           );
         })}
-        <div className="panel cmdty-card">
-          <div className="cmdty-name">{lang === 'fa' ? 'نفت' : 'Oil (WTI/Brent)'}</div>
-          <div className="cmdty-price na">{t('dataUnavailable', lang)}</div>
-          <div className="small muted" style={{ marginTop: 6 }}>{t('oilNote', lang)}</div>
-        </div>
       </div>
       <div className="panel" style={{ marginTop: 12 }}>
         <div className="panel-h">{t('goldTerminal', lang)}</div>
