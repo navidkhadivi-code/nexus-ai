@@ -14,7 +14,7 @@ function admin_check($tok) {
     if (!$s || $exp < time()) nexus_respond(401, array('ok' => false, 'error' => 'Session expired'));
     $users = nexus_read('users', array());
     $me = isset($users[$s['user']]) ? $users[$s['user']] : null;
-    if (!$me || $me['role'] !== 'ADMIN') nexus_respond(403, array('ok' => false, 'error' => 'Admin only'));
+    if (!$me || ($me['role'] !== 'ADMIN' && $me['role'] !== 'SUPER_ADMIN')) nexus_respond(403, array('ok' => false, 'error' => 'Admin only'));
     return $s['user'];
 }
 
@@ -76,7 +76,7 @@ if ($action === 'create') {
 
 if (!isset($users[$username])) nexus_respond(404, array('ok' => false, 'error' => 'User not found'));
 
-if ($users[$username]['role'] === 'ADMIN') nexus_respond(403, array('ok' => false, 'error' => 'Cannot modify admin account here'));
+if ($users[$username]['role'] === 'ADMIN' || $users[$username]['role'] === 'SUPER_ADMIN') nexus_respond(403, array('ok' => false, 'error' => 'Cannot modify admin account here'));
 
 if ($action === 'disable') {
     $users[$username]['disabled'] = true;

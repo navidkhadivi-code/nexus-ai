@@ -58,12 +58,14 @@ export interface AuthState {
   setupRequired: boolean;
 }
 
+function isAdminRole(r: any): boolean { return r === 'ADMIN' || r === 'SUPER_ADMIN'; }
+
 function authFromSession(r: any): AuthState {
   const locked = !r.authenticated;
   return {
     checked: true,
     authenticated: !locked,
-    role: !locked ? (r.role === 'ADMIN' ? 'ADMIN' : 'USER') : '',
+    role: !locked ? (isAdminRole(r.role) ? 'ADMIN' : 'USER') : '',
     user: !locked ? (r.user ?? '') : '',
     plan: !locked ? (r.plan ?? '') : '',
     expires: !locked ? (r.expires ?? null) : null,
@@ -168,7 +170,7 @@ export const useStore = create<State>((set, get) => ({
   authLogin: async (u, p) => {
     const r = await adminApi.login(u, p);
     if (r.ok) {
-      set({ auth: { checked: true, authenticated: true, role: r.role === 'ADMIN' ? 'ADMIN' : 'USER', user: r.user, plan: r.plan ?? '', expires: r.expires ?? null, reason: '', error: '', setupRequired: false } });
+      set({ auth: { checked: true, authenticated: true, role: isAdminRole(r.role) ? 'ADMIN' : 'USER', user: r.user, plan: r.plan ?? '', expires: r.expires ?? null, reason: '', error: '', setupRequired: false } });
       if (!started) get().init();
       return { ok: true };
     }

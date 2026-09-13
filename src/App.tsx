@@ -660,7 +660,7 @@ function UsersPanel({ lang }: any) {
               <td>{r.expires ? daysLeft(r.expires, lang) : '∞'}</td>
               <td className={r.disabled ? 'down' : 'up'}>{r.disabled ? t('disabledWord', lang) : t('active', lang)}</td>
               <td className="btns">
-                {r.role !== 'ADMIN' && (
+                {r.role !== 'ADMIN' && r.role !== 'SUPER_ADMIN' && (
                   <>
                     {r.disabled
                       ? <button className="btn small" disabled={busy} onClick={() => void act('enable', r.user)}>{t('enable', lang)}</button>

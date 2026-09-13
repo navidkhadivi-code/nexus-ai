@@ -27,13 +27,13 @@ if ($action === 'setup') {
     if (!empty($users)) nexus_respond(403, array('ok' => false, 'error' => 'Already configured'));
     if (strlen($username) < 3) nexus_respond(400, array('ok' => false, 'error' => 'Username too short (min 3)'));
     if (strlen($password) < 8) nexus_respond(400, array('ok' => false, 'error' => 'Password too short (min 8)'));
-    $users[$username] = array('hash' => password_hash($password, PASSWORD_DEFAULT), 'role' => 'SUPER_ADMIN', 'created' => time());
+    $users[$username] = array('hash' => password_hash($password, PASSWORD_DEFAULT), 'role' => 'ADMIN', 'created' => time(), 'expires' => null, 'disabled' => false);
     if (!nexus_write('users', $users)) nexus_respond(500, array('ok' => false, 'error' => 'Storage write failed'));
-    $tok = issue_token($sessions, $username, 'SUPER_ADMIN');
+    $tok = issue_token($sessions, $username, 'ADMIN');
     nexus_write('sessions', $sessions);
     nexus_audit('setup_admin', $username);
     nexus_set_cookie($tok, time() + 7 * 86400);
-    nexus_respond(200, array('ok' => true, 'user' => $username, 'role' => 'SUPER_ADMIN'));
+    nexus_respond(200, array('ok' => true, 'user' => $username, 'role' => 'ADMIN', 'expires' => null, 'plan' => 'ADMIN'));
 }
 
 if ($username === '' || $password === '') nexus_respond(400, array('ok' => false, 'error' => 'Missing credentials'));
