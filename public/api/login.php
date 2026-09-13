@@ -57,13 +57,19 @@ if ($user) {
 }
 
 if ($valid) {
+    if (!empty($user['disabled'])) nexus_respond(403, array('ok' => false, 'error' => 'disabled', 'message' => 'Account is disabled — contact the administrator'));
+    $expires = isset($user['expires']) ? (int)$user['expires'] : 0;
+    if ($expires > 0 && $expires < time()) {
+        nexus_audit('login_expired', $username);
+        nexus_respond(403, array('ok' => false, 'error' => 'expired', 'message' => 'Your subscription has expired. Renew: 1-month or 3-month plans'));
+    }
     unset($attempts[$key]);
     nexus_write('attempts', $attempts);
     $tok = issue_token($sessions, $username, $user['role']);
     nexus_write('sessions', $sessions);
     nexus_audit('login', $username, 'ok');
     nexus_set_cookie($tok, time() + 7 * 86400);
-    nexus_respond(200, array('ok' => true, 'user' => $username, 'role' => $user['role']));
+    nexus_respond(200, array('ok' => true, 'user' => $username, 'role' => $user['role'], 'expires' => $expires > 0 ? $expires : null, 'plan' => isset($user['plan']) ? $user['plan'] : 'ADMIN'));
 }
 
 $n = isset($a['n']) ? (int)$a['n'] : 0;

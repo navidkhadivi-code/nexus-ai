@@ -19,10 +19,11 @@ interface Props {
   structure: StructureResult | null;
   liquidity: LiquidityResult | null;
   gann: GannResult | null;
+  tf: string;
   signalLine?: { entry: number; stop: number; targets: number[] } | null;
 }
 
-export default function Chart({ candles, prefs, consensus, structure, liquidity, gann, signalLine }: Props) {
+export default function Chart({ candles, prefs, consensus, structure, liquidity, gann, tf, signalLine }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -47,13 +48,14 @@ export default function Chart({ candles, prefs, consensus, structure, liquidity,
     return () => { chart.remove(); chartRef.current = null; };
   }, []);
 
+  const datasetKey = candles.length ? candles[0].t : -1;
   useEffect(() => {
     const chart = chartRef.current, cs = candleSeries.current, vs = volSeries.current;
     if (!chart || !cs || !vs || !candles.length) return;
     cs.setData(candles.map(c => ({ time: c.t / 1000 as Time, open: c.o, high: c.h, low: c.l, close: c.c })));
     vs.setData(candles.map(c => ({ time: c.t / 1000 as Time, value: c.v, color: c.c >= c.o ? 'rgba(14,203,129,.35)' : 'rgba(246,70,93,.35)' })));
     chart.timeScale().fitContent();
-  }, [candles.length === 0]);
+  }, [datasetKey, tf]);
 
   // rebuild overlay line series on prefs / data change
   useEffect(() => {

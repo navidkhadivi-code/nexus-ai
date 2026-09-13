@@ -9,11 +9,79 @@ import { adminApi } from './api/adminClient';
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'];
 
+function daysLeft(exp: number, lang: Lang): string {
+  const ms = exp - Date.now();
+  if (ms <= 0) return t('expiredWord', lang);
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
+}
+
 type Screen = 'dashboard' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'health';
 
 export default function App() {
   const s = useStore();
   const lang = s.locale as Lang;
+
+  useEffect(() => { s.authInit(); }, []);
+
+  if (!s.auth.checked) return <div className="boot-screen"><div className="logo">◈</div><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">…</div></div>;
+  if (!s.auth.authenticated) return <LoginScreen s={s} lang={lang} />;
+  return <Terminal s={s} lang={lang} />;
+}
+
+function LoginScreen({ s, lang }: any) {
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  if (s.auth.error === 'backend-unavailable') {
+    return <div className="boot-screen"><div className="logo">◈</div><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">{t('authUnavailable', lang)}</div></div>;
+  }
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!u || !p) return;
+    setBusy(true); setErr('');
+    const r = s.auth.setupRequired ? await s.authSetup(u, p) : await s.authLogin(u, p);
+    setBusy(false);
+    if (!r.ok) {
+      if (r.error === 'setup-required') setErr(t('createAdminFirst', lang));
+      else if (r.error === 'expired') setErr(t('expiredMsg', lang));
+      else if (r.error === 'disabled') setErr(t('disabledMsg', lang));
+      else setErr(r.message ?? r.error ?? 'Failed');
+    }
+  };
+
+  if (s.auth.reason) {
+    return (
+      <div className="boot-screen">
+        <div className="logo">◈</div>
+        <div className="brand-name">{t(s.auth.reason === 'expired' ? 'expiredMsg' : 'disabledMsg', lang)}</div>
+        <button className="btn" onClick={() => window.location.reload()}>{t('login', lang)}</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="boot-screen">
+      <form className="login-card" onSubmit={submit}>
+        <div className="logo big">◈</div>
+        <div className="brand-name">{t('appTitle', lang)}</div>
+        <div className="muted small">{t('tagline', lang)}</div>
+        {s.auth.setupRequired && <div className="of-row warn">{t('createAdminFirst', lang)}</div>}
+        <input className="inp" placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} autoComplete="username" autoFocus />
+        <input className="inp" placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} autoComplete={s.auth.setupRequired ? 'new-password' : 'current-password'} />
+        {err && <div className="of-row warn">{err}</div>}
+        <button className="btn primary" disabled={busy || !u || p.length < 8}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
+        <div className="small muted">{t('plansInfo', lang)}</div>
+      </form>
+    </div>
+  );
+}
+
+function Terminal({ s, lang }: any) {
   const [screen, setScreen] = useState<Screen>('dashboard');
   const [prefs, setPrefs] = useState<ChartPrefs>({ ema20: true, ema50: true, bb: false, vwap: true, bos: true, liquidity: true, fvg: true, ob: true, gann: false });
 
@@ -25,7 +93,7 @@ export default function App() {
     { id: 'dashboard', key: 'dashboard' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
     { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
-    { id: 'admin', key: 'admin' }, { id: 'health', key: 'systemHealth' },
+    ...(s.auth?.role === 'ADMIN' ? [{ id: 'admin' as Screen, key: 'admin' }] : []), { id: 'health', key: 'systemHealth' },
   ];
 
   return (
@@ -52,8 +120,13 @@ export default function App() {
           <span className="meta">{s.tick?.source ?? '—'} · {fmt(s.health.marketLatencyMs, 0, lang)} ms</span>
         </div>
         <div className="top-right">
+          {s.auth?.role === 'USER' && s.auth?.expires && (
+            <span className="mode-badge plan" title={t('expires', lang)}>{t('plan', lang)}: {daysLeft(s.auth.expires, lang)}</span>
+          )}
           <span className="mode-badge paper">PAPER</span>
           <span className="mode-badge off" title={t('liveWarn', lang)}>{t('liveTradeDisabled', lang)}</span>
+          <span className="user-badge">{s.auth?.user}{s.auth?.role === 'ADMIN' ? ' ⚙' : ''}</span>
+          <button className="lang-btn" onClick={() => void s.authLogout()}>{t('logout', lang)}</button>
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
         </div>
       </header>
@@ -117,7 +190,7 @@ function Dashboard({ s, lang, prefs, setPrefs, structure }: any) {
             <label key={k} className="pref"><input type="checkbox" checked={(prefs as any)[k]} onChange={() => setPrefs({ ...prefs, [k]: !(prefs as any)[k] })} />{k}</label>
           ))}
         </div>
-        <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann}
+        <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann} tf={s.timeframe}
           signalLine={s.signal ? { entry: s.signal.entry, stop: s.signal.stop, targets: s.signal.targets } : null} />
       </Panel>
 
@@ -511,67 +584,22 @@ function SettingsScreen({ s, lang }: any) {
 }
 
 function AdminScreen({ s, lang }: any) {
-  const [auth, setAuth] = useState<{ checked: boolean; authenticated: boolean; user?: string; setupRequired?: boolean; error?: string }>({ checked: false, authenticated: false });
-  const [u, setU] = useState('');
-  const [p, setP] = useState('');
-  const [busy, setBusy] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
+  const isAdmin = s.auth?.role === 'ADMIN';
+  useEffect(() => { if (isAdmin) adminApi.audit().then(r => setAudit(Array.isArray(r.lines) ? r.lines : [])); }, [isAdmin]);
 
-  useEffect(() => {
-    adminApi.session().then(r => {
-      if (r.error === 'backend-unavailable') setAuth({ checked: true, authenticated: false, error: 'backend-unavailable' });
-      else setAuth({ checked: true, authenticated: !!r.authenticated, user: r.user, setupRequired: !!r.setupRequired });
-    });
-  }, []);
-
-  useEffect(() => {
-    if (auth.authenticated) adminApi.audit().then(r => setAudit(Array.isArray(r.lines) ? r.lines : []));
-  }, [auth.authenticated]);
-
-  const submit = async (setup: boolean) => {
-    setBusy(true);
-    const r = setup ? await adminApi.setup(u, p) : await adminApi.login(u, p);
-    setBusy(false);
-    if (r.ok) setAuth({ checked: true, authenticated: true, user: r.user });
-    else if (r.setupRequired) setAuth(a => ({ ...a, setupRequired: true }));
-    else alert(r.error ?? 'Failed');
-  };
-
-  if (!auth.checked) return <Panel title={t('admin', lang)}>…</Panel>;
-
-  if (auth.error === 'backend-unavailable') {
-    return <Panel title={t('admin', lang)}><div className="of-row warn">{t('authUnavailable', lang)}</div></Panel>;
-  }
-
-  if (!auth.authenticated) {
-    return (
-      <Panel title={t('adminLogin', lang)}>
-        {auth.setupRequired && <div className="of-row warn" style={{ marginBottom: 10 }}>{t('createAdminFirst', lang)}</div>}
-        <div className="set-grid" style={{ maxWidth: 460 }}>
-          <input className="inp" placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} autoComplete="username" />
-          <input className="inp" placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} autoComplete={auth.setupRequired ? 'new-password' : 'current-password'} />
-        </div>
-        <button className="btn primary" disabled={busy || u.length < 3 || p.length < 8} onClick={() => submit(!!auth.setupRequired)}>
-          {busy ? '…' : auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}
-        </button>
-        <div className="small muted note">Min 8 chars · 5 failed attempts ⇒ 15-min lockout · bcrypt · HttpOnly cookie</div>
-      </Panel>
-    );
-  }
+  if (!isAdmin) return <Panel title={t('admin', lang)}><div className="of-row warn">{t('adminOnly', lang)}</div></Panel>;
 
   return (
     <div>
-      <Panel title={`${t('admin', lang)} — ${auth.user}`}>
+      <UsersPanel lang={lang} />
+      <Panel title={`${t('admin', lang)} — ${s.auth.user}`}>
         <div className="admin-grid">
           <div><b>{t('agentCards', lang)} ({t('settings', lang)})</b>
             <div className="small">NOVA 15% · ORION 15% · LUMA 20% · ATLAS 15% · GANN 5% · MACRO 10% · QUANT 20% · ARES = VETO</div>
           </div>
           <div><b>{t('liveTradeDisabled', lang)}</b><div className="small">{t('liveWarn', lang)}</div></div>
-          <div><b>{t('killSwitch', lang)}</b>
-            <div className="small">state={s.paper.killSwitch ? 'ACTIVE' : 'ARMED-OFF'} · journal {s.paper.journal.length} entries</div>
-          </div>
         </div>
-        <div style={{ marginTop: 10 }}><button className="btn" onClick={async () => { await adminApi.logout(); setAuth({ checked: true, authenticated: false }); }}>{t('logout', lang)}</button></div>
       </Panel>
       <Panel title={t('auditLog', lang)}>
         <div className="of-list">
@@ -579,12 +607,78 @@ function AdminScreen({ s, lang }: any) {
           {!audit.length && <div className="empty">{t('noData', lang)}</div>}
         </div>
       </Panel>
-      <Panel title="Order Audit (PAPER)">
-        <div className="of-list">
-          {s.paper.orders.slice(0, 20).map((o: any) => <div key={o.id} className="of-row mono">{new Date(o.createdAt).toISOString()} PAPER {o.symbol} {o.side} {o.qty.toFixed(5)} @ {o.fillPrice?.toFixed(2)} fee={o.feePaid.toFixed(4)}</div>)}
-        </div>
-      </Panel>
     </div>
+  );
+}
+
+function UsersPanel({ lang }: any) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [nu, setNu] = useState('');
+  const [np, setNp] = useState('');
+  const [plan, setPlan] = useState('1m');
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => adminApi.users('list').then(r => setRows(Array.isArray(r.users) ? r.users : []));
+  useEffect(() => { void refresh(); }, []);
+
+  const act = async (action: string, username: string, extra?: Record<string, unknown>) => {
+    setBusy(true);
+    const r = await adminApi.users(action, { username, ...extra });
+    setBusy(false);
+    if (!r.ok) alert(r.message ?? r.error ?? 'failed');
+    if (Array.isArray(r.users)) setRows(r.users);
+    else void refresh();
+  };
+
+  const createUser = async () => {
+    setBusy(true);
+    const r = await adminApi.users('create', { username: nu, password: np, plan });
+    setBusy(false);
+    if (!r.ok) { alert(r.error ?? 'failed'); return; }
+    setRows(Array.isArray(r.users) ? r.users : []);
+    setNu(''); setNp('');
+  };
+
+  return (
+    <Panel title={`${t('users', lang)} (${rows.length})`}>
+      <div className="set-grid" style={{ maxWidth: 720, marginBottom: 12 }}>
+        <input className="inp" placeholder={t('username', lang)} value={nu} onChange={e => setNu(e.target.value)} />
+        <input className="inp" placeholder={t('password', lang) + ' (min 8)'} value={np} onChange={e => setNp(e.target.value)} />
+        <select className="inp" value={plan} onChange={e => setPlan(e.target.value)}>
+          <option value="1m">{t('plan1m', lang)}</option>
+          <option value="3m">{t('plan3m', lang)}</option>
+        </select>
+        <button className="btn primary" disabled={busy || nu.length < 3 || np.length < 8} onClick={() => void createUser()}>{t('createUser', lang)}</button>
+      </div>
+      <table className="tbl">
+        <thead><tr><th>{t('username', lang)}</th><th>{t('plan', lang)}</th><th>{t('expires', lang)}</th><th>{t('status', lang)}</th><th></th></tr></thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.user}>
+              <td><b>{r.user}</b>{r.role === 'ADMIN' ? ' ⚙' : ''}</td>
+              <td>{r.plan ?? '—'}</td>
+              <td>{r.expires ? daysLeft(r.expires, lang) : '∞'}</td>
+              <td className={r.disabled ? 'down' : 'up'}>{r.disabled ? t('disabledWord', lang) : t('active', lang)}</td>
+              <td className="btns">
+                {r.role !== 'ADMIN' && (
+                  <>
+                    {r.disabled
+                      ? <button className="btn small" disabled={busy} onClick={() => void act('enable', r.user)}>{t('enable', lang)}</button>
+                      : <button className="btn small danger" disabled={busy} onClick={() => void act('disable', r.user)}>{t('disable', lang)}</button>}
+                    <button className="btn small" disabled={busy} onClick={() => { const pw = prompt(t('newPassPrompt', lang)); if (pw && pw.length >= 8) void act('pass', r.user, { password: pw }); }}>{t('resetPass', lang)}</button>
+                    <button className="btn small" disabled={busy} onClick={() => void act('extend', r.user, { plan: '1m' })}>+{t('plan1m', lang)}</button>
+                    <button className="btn small" disabled={busy} onClick={() => void act('extend', r.user, { plan: '3m' })}>+{t('plan3m', lang)}</button>
+                    <button className="btn small danger" disabled={busy} onClick={() => { if (confirm(`DELETE ${r.user}?`)) void act('delete', r.user); }}>{t('del', lang)}</button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colSpan={5} className="empty">{t('noData', lang)}</td></tr>}
+        </tbody>
+      </table>
+      <div className="small muted note">{t('paymentNote', lang)}</div>
+    </Panel>
   );
 }
 

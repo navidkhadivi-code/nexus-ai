@@ -1,9 +1,11 @@
 ﻿import { create } from 'zustand';
 import type { Candle, ConnState, OrderBook, Tick, Timeframe, Trade, ExchangeAdapter } from '../api/types';
+import { TF_MS } from '../api/types';
 import { MarketGateway } from '../api/gateway';
 import { binanceAdapter } from '../api/binance';
 import { bybitAdapter } from '../api/bybit';
 import { okxAdapter } from '../api/okx';
+import { adminApi } from '../api/adminClient';
 import { OrderFlowEngine, orderBookMetrics } from '../engine/orderflow';
 import { analyzeStructure } from '../engine/structure';
 import { analyzeLiquidity } from '../engine/liquidity';
@@ -44,6 +46,33 @@ export interface LiveSignal {
 
 export interface AgentPerf { agent: string; preds: number; hits: number; accuracy: number }
 
+export interface AuthState {
+  checked: boolean;
+  authenticated: boolean;
+  role: 'ADMIN' | 'USER' | '';
+  user: string;
+  plan: string;
+  expires: number | null;
+  reason: 'expired' | 'disabled' | '';
+  error: string;
+  setupRequired: boolean;
+}
+
+function authFromSession(r: any): AuthState {
+  const locked = !r.authenticated;
+  return {
+    checked: true,
+    authenticated: !locked,
+    role: !locked ? (r.role === 'ADMIN' ? 'ADMIN' : 'USER') : '',
+    user: !locked ? (r.user ?? '') : '',
+    plan: !locked ? (r.plan ?? '') : '',
+    expires: !locked ? (r.expires ?? null) : null,
+    reason: locked ? (r.reason ?? '') : '',
+    error: r.error === 'backend-unavailable' ? 'backend-unavailable' : '',
+    setupRequired: locked && !!r.setupRequired,
+  };
+}
+
 export interface HealthState {
   ws: ConnState;
   wsDetail: string;
@@ -56,6 +85,11 @@ export interface HealthState {
 }
 
 interface State {
+  auth: AuthState;
+  authInit: () => void;
+  authSetup: (u: string, p: string) => Promise<{ ok: boolean; error?: string; message?: string }>;
+  authLogin: (u: string, p: string) => Promise<{ ok: boolean; error?: string; message?: string }>;
+  authLogout: () => Promise<void>;
   symbol: string;
   timeframe: Timeframe;
   exchange: ExchangePref;
@@ -104,6 +138,7 @@ let currentAdapter: ExchangeAdapter = binanceAdapter;
 let refreshing = false;
 let lastRefresh = 0;
 let started = false;
+let authPolling = false;
 const mtfCache: Record<string, Candle[]> = {};
 
 async function pickAdapter(pref: ExchangePref): Promise<ExchangeAdapter> {
@@ -115,6 +150,46 @@ async function pickAdapter(pref: ExchangePref): Promise<ExchangeAdapter> {
 }
 
 export const useStore = create<State>((set, get) => ({
+  auth: { checked: false, authenticated: false, role: '', user: '', plan: '', expires: null, reason: '', error: '', setupRequired: false },
+  authInit: () => {
+    const poll = async () => {
+      const r = await adminApi.session();
+      const next = authFromSession(r);
+      const was = get().auth.authenticated;
+      set({ auth: next });
+      if (was && !next.authenticated) {
+        // entitlement lost mid-session: stop all live data + signals (server + client double-lock)
+        gateway?.stop(); gateway = null; started = false;
+      }
+    };
+    void poll();
+    if (!authPolling) { authPolling = true; window.setInterval(() => void poll(), 60000); }
+  },
+  authLogin: async (u, p) => {
+    const r = await adminApi.login(u, p);
+    if (r.ok) {
+      set({ auth: { checked: true, authenticated: true, role: r.role === 'ADMIN' ? 'ADMIN' : 'USER', user: r.user, plan: r.plan ?? '', expires: r.expires ?? null, reason: '', error: '', setupRequired: false } });
+      if (!started) get().init();
+      return { ok: true };
+    }
+    if (r.setupRequired) set(st => ({ auth: { ...st.auth, checked: true, setupRequired: true } }));
+    return { ok: false, error: r.error, message: r.message };
+  },
+  authSetup: async (u, p) => {
+    const r = await adminApi.setup(u, p);
+    if (r.ok) {
+      set({ auth: { checked: true, authenticated: true, role: 'ADMIN', user: r.user, plan: 'ADMIN', expires: null, reason: '', error: '', setupRequired: false } });
+      if (!started) get().init();
+      return { ok: true };
+    }
+    return { ok: false, error: r.error, message: r.message };
+  },
+  authLogout: async () => {
+    await adminApi.logout();
+    gateway?.stop(); gateway = null; started = false;
+    set({ auth: { checked: true, authenticated: false, role: '', user: '', plan: '', expires: null, reason: '', error: '', setupRequired: false } });
+  },
+
   symbol: 'BTCUSDT',
   timeframe: '15m',
   exchange: 'AUTO',
@@ -164,18 +239,14 @@ export const useStore = create<State>((set, get) => ({
   setSymbol: (s) => {
     const sym = s.toUpperCase();
     set({ symbol: sym, candles: [], consensus: null, ares: null, signal: null, error: null });
-    void (async () => {
-      await loadSymbolData(set, get);
-      gateway?.reconfigure(currentAdapter, sym, get().timeframe);
-    })();
+    gateway?.reconfigure(currentAdapter, sym, get().timeframe);
+    void loadSymbolData(set, get);
   },
 
   setTimeframe: (t) => {
     set({ timeframe: t, candles: [] });
-    void (async () => {
-      await loadSymbolData(set, get);
-      gateway?.reconfigure(currentAdapter, get().symbol, t);
-    })();
+    gateway?.reconfigure(currentAdapter, get().symbol, t);
+    void loadSymbolData(set, get);
   },
 
   setExchange: (pref) => {
@@ -300,6 +371,8 @@ function makeHandlers(set: SetPartial, get: () => State) {
     onBook: (b: OrderBook) => set({ book: b, bookMetrics: orderBookMetrics(b) }),
     onTrade: (t: Trade) => ofEngine.pushTrade(t),
     onCandle: (c: Candle, final: boolean) => {
+      const tfMs = TF_MS[get().timeframe];
+      if (tfMs && c.t % tfMs !== 0) return; // deterministic guard: drop stale-TF frames after a switch
       set(st => {
         const arr = [...st.candles];
         if (arr.length && arr[arr.length - 1].t === c.t) arr[arr.length - 1] = c;

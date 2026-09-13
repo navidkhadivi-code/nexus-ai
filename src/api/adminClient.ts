@@ -22,4 +22,5 @@ export const adminApi = {
   setup: (username: string, password: string) => call('login.php', { action: 'setup', username, password }),
   logout: () => call('logout.php', {}),
   audit: () => call('audit.php'),
+  users: (action: string, extra?: Record<string, unknown>) => call('users.php', { action, ...(extra ?? {}) }),
 };

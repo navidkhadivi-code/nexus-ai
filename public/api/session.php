@@ -16,4 +16,19 @@ if (!$s || $exp < time()) {
     if ($s) { unset($sessions[$h]); nexus_write('sessions', $sessions); }
     nexus_respond(200, array('authenticated' => false, 'setupRequired' => $setupRequired));
 }
-nexus_respond(200, array('authenticated' => true, 'user' => $s['user'], 'role' => $s['role'], 'setupRequired' => false));
+
+// REAL-TIME entitlement: admin can disable / subscription can expire mid-session
+$u = isset($users[$s['user']]) ? $users[$s['user']] : null;
+if (!$u) {
+    unset($sessions[$h]); nexus_write('sessions', $sessions);
+    nexus_respond(200, array('authenticated' => false, 'setupRequired' => $setupRequired));
+}
+if (!empty($u['disabled'])) nexus_respond(200, array('authenticated' => false, 'reason' => 'disabled'));
+$uExp = isset($u['expires']) ? (int)$u['expires'] : 0;
+if ($uExp > 0 && $uExp < time()) nexus_respond(200, array('authenticated' => false, 'reason' => 'expired'));
+
+nexus_respond(200, array(
+    'authenticated' => true, 'user' => $s['user'], 'role' => $u['role'],
+    'expires' => $uExp > 0 ? $uExp : null, 'plan' => isset($u['plan']) ? $u['plan'] : 'ADMIN',
+    'setupRequired' => false,
+));
