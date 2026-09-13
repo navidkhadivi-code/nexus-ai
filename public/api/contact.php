@@ -18,7 +18,8 @@ $username = isset($in['username']) ? trim(preg_replace('/[^A-Za-z0-9_.@-]/', '',
 $note = isset($in['note']) ? mb_substr(trim(preg_replace('/[\x00-\x1F\x7F]/', '', (string)$in['note'])), 0, 500, 'UTF-8') : '';
 
 if (mb_strlen($name, 'UTF-8') < 2 || mb_strlen($name, 'UTF-8') > 60) nexus_respond(400, array('ok' => false, 'error' => 'invalid name'));
-if (strlen($contact) < 5 || strlen($contact) > 80) nexus_respond(400, array('ok' => false, 'error' => 'invalid contact'));
+if (!filter_var($contact, FILTER_VALIDATE_EMAIL)) nexus_respond(400, array('ok' => false, 'error' => 'valid email required'));
+if (strlen($contact) > 80) nexus_respond(400, array('ok' => false, 'error' => 'invalid email'));
 if (!in_array($type, array('buy', 'renew'))) $type = 'buy';
 if (!in_array($plan, array('1m', '3m'))) $plan = '1m';
 
@@ -48,7 +49,7 @@ $planFa = $plan === '1m' ? '۱ ماهه' : '۳ ماهه';
 $body = "درخواست جدید — Persian Trade (ai.ipeset.com)\n"
     . "============================================\n"
     . "نوع: {$typeFa} ({$type})\nپلن: {$planFa} ({$plan})\n"
-    . "نام: {$name}\nراه ارتباطی: {$contact}\n"
+    . "نام: {$name}\nایمیل: {$contact}\n"
     . ($username !== '' ? "نام‌کاربری (برای تمدید): {$username}\n" : '')
     . ($note !== '' ? "توضیحات: {$note}\n" : '')
     . "IP: {$ip}\nTime: " . gmdate('c') . "\n";

@@ -97,9 +97,10 @@ function RequestPanel({ lang }: any) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr('');
-    if (f.name.length < 2 || f.contact.length < 5) { setErr(t('reqFillErr', lang)); return; }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.contact.trim());
+    if (f.name.length < 2 || !emailOk) { setErr(t('reqFillErr', lang)); return; }
     setBusy(true);
-    const r = await adminApi.contact(f);
+    const r = await adminApi.contact({ ...f, contact: f.contact.trim().toLowerCase() });
     setBusy(false);
     if (r.ok) setDone(true); else setErr(r.error ?? 'failed');
   };
@@ -114,7 +115,7 @@ function RequestPanel({ lang }: any) {
         <form className="login-card" onSubmit={submit}>
           <div className="brand-name" style={{ fontSize: 14, letterSpacing: 1 }}>{t('requestTitle', lang)}</div>
           <input className="inp" placeholder={t('reqName', lang)} value={f.name} onChange={e => set('name', e.target.value)} />
-          <input className="inp" placeholder={t('reqContact', lang)} value={f.contact} onChange={e => set('contact', e.target.value)} />
+          <input className="inp" type="email" placeholder={t('reqContact', lang)} value={f.contact} onChange={e => set('contact', e.target.value)} required autoComplete="email" />
           <div className="mt-side">
             <button type="button" className={`chip ${f.type === 'buy' ? 'on' : ''}`} onClick={() => set('type', 'buy')}>{t('reqBuy', lang)}</button>
             <button type="button" className={`chip ${f.type === 'renew' ? 'on' : ''}`} onClick={() => set('type', 'renew')}>{t('reqRenew', lang)}</button>
@@ -915,6 +916,7 @@ function UsersPanel({ lang }: any) {
                     {r.disabled
                       ? <button className="btn small" disabled={busy} onClick={() => void act('enable', r.user)}>{t('enable', lang)}</button>
                       : <button className="btn small danger" disabled={busy} onClick={() => void act('disable', r.user)}>{t('disable', lang)}</button>}
+                    <button className="btn small" disabled={busy} onClick={() => { const d = prompt(lang === 'fa' ? 'تاریخ انقضا (YYYY-MM-DD):' : 'Expiry date (YYYY-MM-DD):', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)); if (d) void act('setexp', r.user, { date: d }); }}>📅</button>
                     <button className="btn small" disabled={busy} onClick={() => { const pw = prompt(t('newPassPrompt', lang)); if (pw && pw.length >= 8) void act('pass', r.user, { password: pw }); }}>{t('resetPass', lang)}</button>
                     <button className="btn small" disabled={busy} onClick={() => void act('extend', r.user, { plan: '1m' })}>+{t('plan1m', lang)}</button>
                     <button className="btn small" disabled={busy} onClick={() => void act('extend', r.user, { plan: '3m' })}>+{t('plan3m', lang)}</button>

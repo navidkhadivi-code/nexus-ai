@@ -157,6 +157,24 @@ if ($action === 'extend') {
     }
     nexus_respond(200, array('ok' => true, 'users' => public_users($users)));
 }
+if ($action === 'setexp') {
+    $d = isset($in['date']) ? (string)$in['date'] : '';
+    $ts = strtotime($d . ' 23:59:59 UTC');
+    if (!$ts || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) nexus_respond(400, array('ok' => false, 'error' => 'Invalid date (YYYY-MM-DD)'));
+    $users[$username]['expires'] = $ts;
+    $users[$username]['disabled'] = false;
+    nexus_write('users', $users);
+    nexus_audit('user_set_expiry', $adminUser, $username . ' -> ' . $d);
+    $em3 = isset($users[$username]['email']) ? $users[$username]['email'] : '';
+    if ($em3 !== '') {
+        user_mail($em3, 'Persian Trade — تاریخ انقضای اشتراک', array(
+            'نام‌کاربری: ' . $username,
+            'اشتراک شما تا تاریخ ' . $d . ' معتبر است.',
+            'ورود: https://ai.ipeset.com',
+        ));
+    }
+    nexus_respond(200, array('ok' => true, 'users' => public_users($users)));
+}
 if ($action === 'pass') {
     $password = isset($in['password']) ? (string)$in['password'] : '';
     if (strlen($password) < 8) nexus_respond(400, array('ok' => false, 'error' => 'Password too short (min 8)'));
