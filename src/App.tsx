@@ -461,7 +461,7 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
     icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
     b: {
       en: ['Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.', 'The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Payment: send a message to @persiannetco1 on Telegram to get the deposit address. After payment, your account is activated and login details are emailed to you.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
-      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiannetco1 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
+      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiannetco1 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود — حتماً پوشه Inbox و Spam را چک کنید.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
     },
   },
   {
@@ -971,7 +971,9 @@ function UsersPanel({ lang }: any) {
     setBusy(false);
     if (!r.ok) { alert(r.error ?? 'failed'); return; }
     setRows(Array.isArray(r.users) ? r.users : []);
-    if (ne && !r.mailSent) alert(lang === 'fa' ? 'اکانت ساخته شد ولی ایمیل ارسال نشد — مشخصات را دستی بفرستید.' : 'Account created but email was NOT sent — send credentials manually.');
+    if (ne) alert(r.mailSent
+      ? (lang === 'fa' ? '✅ اکانت ساخته شد و ایمیل فعال‌سازی ارسال شد.\nبه کاربر بگویید پوشه Inbox و Spam را چک کند.' : '✅ Account created, activation email sent.\nTell the user to check INBOX and SPAM folders.')
+      : (lang === 'fa' ? 'اکانت ساخته شد ولی ایمیل ارسال نشد — مشخصات را دستی بفرستید.' : 'Account created but email was NOT sent — send credentials manually.'));
     setNu(''); setNp(''); setNe('');
   };
 

@@ -61,4 +61,23 @@ $headers = 'From: Persian Trade <trade@ipeset.com>' . "\r\n"
 @mail('trade@ipeset.com', $subject, $body, $headers);
 
 nexus_audit('contact_request', 'public', $type . ' ' . $plan . ' from ' . $name);
+
+// confirmation email to the requester
+$typeName = $type === 'buy' ? 'خرید اشتراک / Purchase' : 'تمدید اشتراک / Renewal';
+$planName = $plan === '1m' ? '۱ ماهه — ۳۰ تتر (1 MONTH — 30 USDT)' : '۳ ماهه — ۷۰ تتر (3 MONTHS — 70 USDT)';
+$confBody = "سلام {$name}،\n\nدرخواست شما در Persian Trade ثبت شد:\n"
+    . "نوع: {$typeName}\nپلن: {$planName}\n\n"
+    . "پس از تأیید پرداخت، نام‌کاربری و رمز عبور شما از طریق همین ایمیل ارسال می‌شود.\n"
+    . "لطفاً پوشه Inbox و اسپم (Spam/Junk) را بررسی کنید.\n\n"
+    . "================================\n"
+    . "Hello {$name},\nYour request has been received.\n"
+    . "After payment confirmation, your login credentials will be sent to this email.\n"
+    . "Please check both INBOX and SPAM/Junk folders.\n\n"
+    . "— Persian Trade | https://ai.ipeset.com\n"
+    . "Telegram: @persiannetco1";
+$confHeaders = 'From: Persian Trade <trade@ipeset.com>' . "\r\n"
+    . 'Content-Type: text/plain; charset=UTF-8' . "\r\n"
+    . 'X-Mailer: PersianTrade-Notify';
+@mail($contact, '=?UTF-8?B?' . base64_encode('Persian Trade — درخواست شما ثبت شد / Request Received') . '?=', $confBody, $confHeaders);
+
 nexus_respond(200, array('ok' => true));

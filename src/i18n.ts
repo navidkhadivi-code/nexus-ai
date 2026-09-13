@@ -164,7 +164,7 @@ const dict: Record<string, { en: string; fa: string }> = {
   reqUsername: { en: 'Your username', fa: 'نام‌کاربری شما' },
   reqNote: { en: 'Note (optional)', fa: 'توضیح (اختیاری)' },
   reqSend: { en: 'SEND REQUEST', fa: 'ارسال درخواست' },
-  reqSent: { en: 'Request sent! We will contact you shortly. For faster response: Telegram @persiannetco1', fa: 'درخواست شما ارسال شد! به‌زودی با شما تماس می‌گیریم. برای پاسخ سریع‌تر: تلگرام @persiannetco1' },
+  reqSent: { en: 'Request received! A confirmation email has been sent to you — please check your INBOX and SPAM/Junk folder. For faster response: Telegram @persiannetco1', fa: 'درخواست شما ثبت شد! ایمیل تأیید برایتان ارسال شد — لطفاً پوشه Inbox و اسپم (Spam/Junk) را چک کنید. برای پاسخ سریع‌تر: تلگرام @persiannetco1' },
   reqFillErr: { en: 'Name and a valid email are required.', fa: 'نام و یک ایمیل معتبر الزامی است.' },
   cancel: { en: 'CANCEL', fa: 'انصراف' },
   requests: { en: 'Purchase Requests', fa: 'درخواست‌های خرید' },

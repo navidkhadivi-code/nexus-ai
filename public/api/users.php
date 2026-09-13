@@ -108,9 +108,11 @@ if ($action === 'create') {
             '',
             'آدرس ورود: https://ai.ipeset.com',
             'با این مشخصات وارد شوید و از سیگنال‌های زنده استفاده کنید.',
+            'اگر ایمیل را در Inbox ندیدید، پوشه Spam/Junk را چک کنید.',
             '',
             'Dear ' . $username . ', your subscription is now ACTIVE.',
             'Login at https://ai.ipeset.com with username: ' . $username,
+            'Did not see this email? Check your SPAM/Junk folder.',
             '',
             '— Persian Trade',
         ));
