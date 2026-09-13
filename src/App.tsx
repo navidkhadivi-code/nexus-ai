@@ -174,8 +174,10 @@ function Terminal({ s, lang }: any) {
           <span className="meta">{s.tick?.source ?? '—'} · {fmt(s.health.marketLatencyMs, 0, lang)} ms</span>
         </div>
         <div className="top-right">
-          {s.auth?.role === 'USER' && s.auth?.expires && (
-            <span className="mode-badge plan" title={t('expires', lang)}>{t('plan', lang)}: {daysLeft(s.auth.expires, lang)}</span>
+          {s.auth?.expires && (
+            <span className="mode-badge plan" title={`${t('expires', lang)}: ${new Date(s.auth.expires * 1000).toLocaleDateString()}`}>
+              ⏳ {Math.max(0, Math.ceil((s.auth.expires - Date.now() / 1000) / 86400))} {t('daysLeftWord', lang)}
+            </span>
           )}
           <span className="user-badge">{s.auth?.user}{s.auth?.role === 'ADMIN' ? ' ⚙' : ''}</span>
           <button className="lang-btn" onClick={() => void s.authLogout()}>{t('logout', lang)}</button>
