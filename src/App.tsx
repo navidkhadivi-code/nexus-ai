@@ -81,7 +81,7 @@ function LoginScreen({ s, lang }: any) {
         {err && <div className="of-row warn">{err}</div>}
         <button className="btn primary" disabled={busy || !u || p.length < 8}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
         <div className="small muted">{t('plansInfo', lang)}</div>
-        <a className="tg-link" href="https://t.me/persiannetco1" target="_blank" rel="noopener noreferrer">✈️ {t('adminContact', lang)}: @persiannetco1</a>
+        <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer">✈️ {t('adminContact', lang)}: @persiantrade2025</a>
       </form>
       <RequestPanel lang={lang} />
     </div>
@@ -226,7 +226,7 @@ function Terminal({ s, lang }: any) {
       <footer className="statusbar">
         <span>{t('paperNote', lang)}</span>
         <span>{t('welcome', lang)}</span>
-        <a className="tg-link" href="https://t.me/persiannetco1" target="_blank" rel="noopener noreferrer">✈️ @persiannetco1</a>
+        <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer">✈️ @persiantrade2025</a>
         <span className="mono">engine {s.health.engineMs}ms · up {Math.floor(s.health.uptimeSec / 60)}m</span>
       </footer>
     </div>
@@ -460,8 +460,8 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
   {
     icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
     b: {
-      en: ['Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.', 'The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Payment: send a message to @persiannetco1 on Telegram to get the deposit address. After payment, your account is activated and login details are emailed to you.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
-      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiannetco1 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود — حتماً پوشه Inbox و Spam را چک کنید.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
+      en: ['Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.', 'The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Payment: send a message to @persiantrade2025 on Telegram to get the deposit address. After payment, your account is activated and login details are emailed to you.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
+      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiantrade2025 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود — حتماً پوشه Inbox و Spam را چک کنید.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
     },
   },
   {

@@ -74,7 +74,7 @@ $confBody = "سلام {$name}،\n\nدرخواست شما در Persian Trade ثب
     . "After payment confirmation, your login credentials will be sent to this email.\n"
     . "Please check both INBOX and SPAM/Junk folders.\n\n"
     . "— Persian Trade | https://ai.ipeset.com\n"
-    . "Telegram: @persiannetco1";
+    . "Telegram: @persiantrade2025";
 $confHeaders = 'From: Persian Trade <trade@ipeset.com>' . "\r\n"
     . 'Content-Type: text/plain; charset=UTF-8' . "\r\n"
     . 'X-Mailer: PersianTrade-Notify';
