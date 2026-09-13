@@ -26,7 +26,7 @@ export default function App() {
 
   useEffect(() => { s.authInit(); }, []);
 
-  if (!s.auth.checked) return <div className="boot-screen"><div className="logo">◈</div><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">…</div></div>;
+  if (!s.auth.checked) return <div className="boot-screen"><img src="./logo.png" className="logo-img" alt="" /><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">…</div></div>;
   if (!s.auth.authenticated) return <LoginScreen s={s} lang={lang} />;
   return <Terminal s={s} lang={lang} />;
 }
@@ -38,7 +38,7 @@ function LoginScreen({ s, lang }: any) {
   const [busy, setBusy] = useState(false);
 
   if (s.auth.error === 'backend-unavailable') {
-    return <div className="boot-screen"><div className="logo">◈</div><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">{t('authUnavailable', lang)}</div></div>;
+    return <div className="boot-screen"><img src="./logo.png" className="logo-img" alt="" /><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">{t('authUnavailable', lang)}</div></div>;
   }
 
   const submit = async (e?: React.FormEvent) => {
@@ -58,7 +58,7 @@ function LoginScreen({ s, lang }: any) {
   if (s.auth.reason) {
     return (
       <div className="boot-screen">
-        <div className="logo">◈</div>
+        <img src="./logo.png" className="logo-img" alt="" />
         <div className="brand-name">{t(s.auth.reason === 'expired' ? 'expiredMsg' : 'disabledMsg', lang)}</div>
         <button className="btn" onClick={() => window.location.reload()}>{t('login', lang)}</button>
       </div>
@@ -68,7 +68,7 @@ function LoginScreen({ s, lang }: any) {
   return (
     <div className="boot-screen">
       <form className="login-card" onSubmit={submit}>
-        <div className="logo big">◈</div>
+        <img src="./logo.png" className="logo-img big" alt="" />
         <div className="brand-name">{t('appTitle', lang)}</div>
         <div className="muted small">{t('tagline', lang)}</div>
         <div className="lang-row">
@@ -161,7 +161,7 @@ function Terminal({ s, lang }: any) {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <div className="logo">◈</div>
+          <img src="./logo.png" alt="" className="logo-img" />
           <div>
             <div className="brand-name">{t('appTitle', lang)}</div>
             <div className="brand-sub">{t('tagline', lang)}</div>

@@ -34,6 +34,8 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
   background: conic-gradient(from 180deg, #4f8cff, #b46bff, #0ecb81, #4f8cff);
   border-radius: 8px; color: #05080e; box-shadow: 0 0 18px #4f8cff55;
 }
+.logo-img { height: 38px; width: auto; border-radius: 8px; }
+.logo-img.big { height: 64px; border-radius: 14px; box-shadow: 0 0 24px #4f8cff33; }
 .brand-name { font-weight: 800; letter-spacing: 1.5px; font-size: 15px; }
 .brand-sub { font-size: 10px; color: var(--muted); }
 .ticker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -242,7 +244,7 @@ textarea.inp { resize: vertical; font-family: inherit; }
 .cmdty-chg { font-size: 11px; color: var(--muted); }
 .cmdty-spark { width: 100%; height: 54px; margin-top: 8px; }
 .login-card { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 30px 28px; width: 340px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
-.login-card .logo.big { width: 56px; height: 56px; font-size: 32px; margin: 0 auto; border-radius: 14px; }
+.login-card .logo-img.big { margin: 0 auto; }
 .login-card .brand-name { letter-spacing: 3px; font-size: 18px; }
 .login-card .inp { width: 100%; }
 .mode-badge.plan { background: #0ecb8118; color: var(--up); border: 1px solid #0ecb8144; font-size: 11.5px; padding: 5px 11px; }
