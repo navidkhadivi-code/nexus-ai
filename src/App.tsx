@@ -148,26 +148,32 @@ function GeoNotice({ lang }: any) {
   const [hidden, setHidden] = useState(() => { try { return sessionStorage.getItem('geo_dismissed') === '1'; } catch { return false; } });
 
   useEffect(() => {
-    fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
+    fetch('/api/geo.php', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(j => setCountry(String(j.country_code || '').toUpperCase()))
-      .catch(() => setCountry(''));
+      .then(j => setCountry(String(j.ok ? j.country || 'X' : '').toUpperCase()))
+      .catch(() => {
+        // fallback: browser-side check
+        fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(j => setCountry(String(j.country_code || '').toUpperCase()))
+          .catch(() => setCountry(''));
+      });
   }, []);
 
   if (hidden) return null;
   const isIR = country === 'IR';
-  const isForeign = country && !isIR;
+  const isForeign = !!country && !isIR;
   if (isForeign) {
     return (
       <div className="geo-bar ok">
-        <span>{t('geoOk', lang)}</span>
+        <span>{country} · {t('geoOk', lang)}</span>
         <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
       </div>
     );
   }
   return (
     <div className={`geo-bar ${isIR ? 'warn' : 'hint'}`}>
-      <span>{isIR ? t('geoIranWarn', lang) : t('geoHint', lang)}</span>
+      <span>{isIR ? '🇮 IR · ' : ''}{isIR ? t('geoIranWarn', lang) : t('geoHint', lang)}</span>
       <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
     </div>
   );
