@@ -417,66 +417,244 @@ function Metric({ label, value, tone, strong }: any) {
 // ---------------- GUIDE (آموزش) ----------------
 const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; fa: string[] } }[] = [
   {
+    icon: '🎯', t: { en: 'What is this platform?', fa: 'این پلتفرم چیست؟' },
+    b: {
+      en: [
+        'PersianTrade is a crypto ANALYSIS terminal. It answers three questions for you: What is the market doing right now? What do the specialists say about it? Is a trade worth taking at this moment?',
+        'It does NOT trade for you and does NOT promise profit. It gives you structured, data-driven insight so your own decisions are better informed.',
+        'Every number you see comes from real exchange data (Binance / Bybit / OKX) — never invented. If a data feed dies, the panel says DATA UNAVAILABLE instead of showing fake numbers.',
+        'You pay for a subscription (1 or 3 months), log in, and get the full terminal: charts, signals, AI consensus, risk engine, paper trading, backtesting and journal.',
+      ],
+      fa: [
+        'پرشین‌ترید یک ترمینال «تحلیل» ارز دیجیتال است. به سه سوال جواب میدهد: بازار الان چه‌کار میکند؟ نظر متخصص‌ها چیست؟ آیا همین الان معامله ارزش ورود دارد؟',
+        'این سیستم به‌جای شما معامله نمی‌کند و سود تضمین نمی‌کند. بینش ساختارمند و داده‌محور میدهد تا «خودت» تصمیم بهتری بگیری.',
+        'هر عددی که می‌بینی از داده واقعی صرافی (بایننس/بای‌بیت/OKX) میاد — هرگز ساخته نمیشه. اگر فید قطع بشه، به‌جای عدد جعلی پیام «داده در دسترس نیست» می‌بینی.',
+        'اشتراک می‌خری (۱ یا ۳ ماهه)، وارد میشی و کل ترمینال رو در اختیار داری: چارت، سیگنال، اجماع AI، موتور ریسک، معامله کاغذی، بک‌تست و ژورنال.',
+      ],
+    },
+  },
+  {
+    icon: '🧭', t: { en: 'First steps (follow this order)', fa: 'قدم‌های اول (به همین ترتیب برو)' },
+    b: {
+      en: [
+        '1) Pick your market from the top bar (BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, PAXGUSDT = gold).',
+        '2) Pick a timeframe (1m to 1w). Start with 15m or 1h — cleaner signals.',
+        '3) Watch the right panel: AI CONSENSUS. It always shows the current market opinion: LONG / SHORT / NO TRADE with confidence, entry, stop and targets.',
+        '4) Check the red badge on the Signals menu — it counts new signal events. Open it to see the live signal and its full history.',
+        '5) Before risking anything, open trades in PAPER mode (Positions menu) — real prices, fake money.',
+      ],
+      fa: [
+        '۱) بازارت رو از نوار بالا انتخاب کن (BTCUSDT، ETHUSDT، SOLUSDT، XRPUSDT، DOGEUSDT، PAXGUSDT = طلا).',
+        '۲) تایم‌فریم رو انتخاب کن (۱ دقیقه تا هفتگی). با ۱۵ دقیقه یا ۱ ساعت شروع کن — سیگنال‌ها تمیزترن.',
+        '۳) پنل سمت راست رو ببین: «اجماع هوش مصنوعی». نظر فعلی بازار رو نشون میده: LONG / SHORT / بدون معامله، با اطمینان، ورود، حد ضرر و هدف‌ها.',
+        '۴) بج قرمز روی منوی «سیگنال‌ها» رو چک کن — تعداد رویدادهای جدید رو میشمره. بازش کن تا سیگنال فعال و تاریخچه‌اش رو ببینی.',
+        '۵) قبل از هر ریسکی، در حالت کاغذی (منوی معاملات باز) معامله بزن — قیمت واقعی، پول الکی.',
+      ],
+    },
+  },
+  {
     icon: '📡', t: { en: 'Where are the signals?', fa: 'سیگنال‌ها کجا هستند؟' },
     b: {
-      en: ['On the Dashboard, the right panel "AI CONSENSUS" shows the live signal: direction, entry zone, stop-loss and TP1/TP2/TP3.', 'The "Signals" menu shows the current signal status and its full history.', 'Statuses: WAITING (price has not reached entry yet) → ACTIVE → TP1/TP2/TP3 (targets hit) or STOP (stop-loss hit).'],
-      fa: ['در داشبورد، پنل سمت راست «اجماع هوش مصنوعی» سیگنال زنده را نشان می‌دهد: جهت، محدوده ورود، حد ضرر و هدف‌های ۱/۲/۳.', 'منوی «سیگنال‌ها» وضعیت سیگنال فعلی و تاریخچه کامل آن را نشان می‌دهد.', 'وضعیت‌ها: WAITING (قیمت هنوز به ورود نرسیده) ← ACTIVE ← TP1/TP2/TP3 (هدف‌ها زده شد) یا STOP (حد ضرر خورد).'],
+      en: [
+        'On the Dashboard, the right panel "AI CONSENSUS" shows the live signal: direction, entry zone, stop-loss and TP1/TP2/TP3.',
+        'The "Signals" menu shows the current signal status and its full history (time, symbol, status, confidence, R/R).',
+        'Statuses: WAITING (price has not reached the entry zone yet) → ACTIVE (you are in the setup) → TP1/TP2/TP3 (targets hit one by one) or STOP (stop-loss hit).',
+        'A new signal is issued ONLY when all gates pass. When nothing qualifies, the Signals panel honestly shows "NO TRADE — waiting for a high-quality setup" instead of forcing something.',
+      ],
+      fa: [
+        'در داشبورد، پنل سمت راست «اجماع هوش مصنوعی» سیگنال زنده رو نشون میده: جهت، محدوده ورود، حد ضرر و هدف‌های ۱/۲/۳.',
+        'منوی «سیگنال‌ها» وضعیت سیگنال فعلی و تاریخچه کاملش رو نشون میده (زمان، نماد، وضعیت، اطمینان، R/R).',
+        'وضعیت‌ها: WAITING (قیمت هنوز به ناحیه ورود نرسیده) ← ACTIVE (داخل ستاپ هستی) ← TP1/TP2/TP3 (هدف‌ها یکی‌یکی زده میشن) یا STOP (حد ضرر خورده).',
+        'سیگنال جدید فقط وقتی صادر میشه که «همه» دروازه‌ها رد بشن. وقتی چیزی واجد شرایط نیست، پنل صادقانه «بدون معامله — در انتظار ستاپ باکیفیت» نشون میده، نه یه چیز اجباری.',
+      ],
     },
   },
   {
-    icon: '🧠', t: { en: 'How to read a signal', fa: 'چطور سیگنال را بخوانیم' },
+    icon: '🧠', t: { en: 'How to read a signal — example', fa: 'چطور یک سیگنال رو بخونیم — با مثال' },
     b: {
-      en: ['LONG = buy signal, SHORT = sell signal, NEUTRAL = no position.', 'Confidence: agreement strength of the 7 analysis agents (weighted).', 'R/R: reward-to-risk ratio — signals below 1.3 are never issued.', '"WHY?" section: every reason is computed from real data (structure, order flow, liquidity…), never invented.', 'Risks: what can invalidate the setup.'],
-      fa: ['LONG = سیگنال خرید، SHORT = سیگنال فروش، NEUTRAL = بدون پوزیشن.', 'Confidence: قدرت هم‌نظری ۷ ایجنت تحلیلی (وزن‌دار).', 'R/R: نسبت سود به ریسک — سیگنال زیر ۱.۳ هرگز صادر نمی‌شود.', 'بخش «چرا؟»: هر دلیل از داده واقعی محاسبه شده (ساختار، جریان سفارش، نقدینگی…)، هرگز ساخته نمی‌شود.', 'ریسک‌ها: چیزهایی که می‌توانند ستاپ را باطل کنند.'],
+      en: [
+        'Example: BTCUSDT · LONG · Confidence 72% · Agreement 86% · Entry 95,400–95,600 · SL 94,700 · TP1 96,900 / TP2 98,300 / TP3 100,500 · R/R 2.1',
+        'LONG = buy signal. SHORT = sell signal. NEUTRAL = no position.',
+        'Confidence = weighted agreement strength of the 7 agents (0-100). It is NOT a probability of profit — it measures how much the specialists agree.',
+        'R/R 2.1 means: if the stop loses 1 unit, the first target gains ~2.1 units. Signals below R/R 1.3 are never issued.',
+        '"WHY?" section lists the real computed reasons (e.g. "4H bullish structure", "sell-side sweep", "positive CVD"). "Risks" lists what can invalidate the idea.',
+        'Every signal is tracked automatically: if TP1-3 hit, agents that agreed get +1 correct prediction in their accuracy score; if STOP hits, they get a miss. Accuracy you see in the AI panel is earned from real outcomes.',
+      ],
+      fa: [
+        'مثال: BTCUSDT · LONG · اطمینان ۷۲٪ · هم‌نظری ۸۶٪ · ورود ۹۵۴۰۰ تا ۹۵۶۰۰ · حد ضرر ۹۴٬۷۰ · هدف‌ها ۹۶٬۹۰۰ / ۹۸٬۳۰ / ۱۰٬۵۰ · R/R برابر 2.1',
+        'LONG = سیگنال خرید. SHORT = سیگنال فروش. NEUTRAL = بدون پوزیشن.',
+        'Confidence (اطمینان) = شدت هم‌نظری وزن‌دار ۷ ایجنت (۰ تا ۱۰۰). این «احتمال سود» نیست؛ نشون میده متخصص‌ها چقدر هم‌راستان.',
+        'R/R برابر 2.1 یعنی اگه حد ضرر ۱ واحد ضرر بزنه، هدف اول حدود 2.1 واحد سود داره. زیر 1.3 هیچ سیگنالی صادر نمیشه.',
+        'بخش «چرا؟» دلایل واقعی محاسبه‌شده رو لیست میکنه (مثلاً «ساختار ۴ ساعته صعودی»، «اسوئیپ سمت فروش»، «CVD مثبت»). بخش «ریسک‌ها» چیزهایی که میتوانند ایده رو باطل کنن.',
+        'هر سیگنال خودکار پیگیری میشه: اگر هدف‌ها بخورن، ایجنت‌های هم‌نظر +۱ پیش‌بینی درست می‌گیرن؛ اگر استاپ بخوره، خطا ثبت میشه. دقتی در پنل AI می‌بینی از نتایج واقعی ساخته شده.',
+      ],
     },
   },
   {
-    icon: '🚫', t: { en: 'NO TRADE is a real signal', fa: '«عدم معامله» هم یک سیگنال واقعی است' },
+    icon: '🤖', t: { en: 'The 8 agents — who votes', fa: 'ایجنت‌های ۸‌تانه — کی رأی میده' },
     b: {
-      en: ['When data is stale, agents disagree, R/R is bad or volatility is extreme, the system shows NO TRADE and stops issuing signals.', 'This is a feature, not a bug: forcing low-quality signals is exactly what fake signal channels do.'],
-      fa: ['وقتی داده قدیمی باشد، ایجنت‌ها اختلاف نظر داشته باشند، R/R بد باشد یا نوسان شدید، سیستم NO TRADE نشان می‌دهد و صدور سیگنال متوقف می‌شود.', 'این یک قابلیت است نه نقص: سیگنال بی‌کیفیت دادن کاری است که کانال‌های جعلی انجام می‌دهند.'],
+      en: [
+        'NOVA (15%) — market structure: HH/HL/LH/LL, BOS/CHoCH, support/resistance, regime.',
+        'ORION (15%) — price action: RSI, MACD, EMAs, candle behavior, breakouts and rejections.',
+        'LUMA (20%) — order flow: delta, CVD, book imbalance, absorption, exhaustion. Heaviest vote because tape does not lie.',
+        'ATLAS (15%) — liquidity: equal highs/lows, sweeps, order blocks, FVGs, POC — where the stops are sitting.',
+        'GANN (5%) — price/time geometry: angles, cycles, confluence zones. Small weight on purpose.',
+        'MACRO (10%) — context: BTC dominance, Fear & Greed, total cap, funding. Never trades, only tilts the score.',
+        'QUANT (20%) — pure statistics: volatility, z-score, historical probability of follow-through. No LLM, no opinions — math.',
+        'ARES — the risk manager. It never votes on direction. It checks EVERY trade: size, stop, R/R, daily loss, exposure, leverage, stale data… and can VETO anything. A signal without ARES approval cannot be opened, even in paper.',
+      ],
+      fa: [
+        'NOVA (۱۵٪) — ساختار بازار: HH/HL/LH/LL، BOS/CHoCH، حمایت/مقاومت، رجیم.',
+        'ORION (۱۵٪) — پرایس اکشن: RSI، MACD، EMA، رفتار کندل، شکست و ریجکت.',
+        'LUMA (۲۰٪) — جریان سفارش: دلتا، CVD، عدم‌تعادل دفتر، جذب، خستگی. سنگین‌ترین رأی، چون نوار معاملات دروغ نمیگه.',
+        'ATLAS (۱۵٪) — نقدینگی: سقف/کف‌های برابر، اسوئیپ‌ها، اوردر‌بلاک، FVG، POC — استاپ‌ها کجا جمع‌اند.',
+        'GANN (۵٪) — هندسه قیمت/زمان: زوایا، چرخه‌ها، زون‌های هم‌پوشانی. عمداً وزن کم.',
+        'MACRO (۱۰٪) — کانتکست: سلطه BTC، ترس‌وطمع، کل ارزش بازار، فاندینگ. هرگز معامله نمیکنه، فقط نمره رو کمی کج میکنه.',
+        'QUANT (۲۰٪) — آمار خالص: نوسان، z-score، احتمال تاریخی ادامه‌دار بودن حرکت. بدون زبان‌مدل، بدون نظر — فقط ریاضی.',
+        'ARES — مدیر ریسک. هرگز جهت پیش‌بینی نمیکنه. «هر» معامله رو چک میکنه: حجم، استاپ، R/R، ضرر روزانه، قرارگیری، اهرم، داده قدیمی… و هر چیزی رو میتونه وتو کنه. بدون تأیید آرس حتی در حالت کاغذی هم معامله باز نمیشه.',
+      ],
     },
   },
   {
-    icon: '🤖', t: { en: 'The 8 agents', fa: 'ایجنت‌های هشت‌گانه' },
+    icon: '🚫', t: { en: 'NO TRADE is a real signal', fa: '«بدون معامله» هم یک سیگنال واقعیه' },
     b: {
-      en: ['NOVA (structure) · ORION (price action) · LUMA (order flow) · ATLAS (liquidity) · GANN (price/time) · MACRO (market sentiment) · QUANT (statistics) — each votes with a weight.', 'ARES is the risk manager: it never predicts direction, but can VETO any trade (position size, daily loss, exposure, leverage limits).', 'The AI screen shows each agent\'s accuracy from real past signal outcomes.'],
-      fa: ['NOVA (ساختار) · ORION (پرایس اکشن) · LUMA (جریان سفارش) · ATLAS (نقدینگی) · GANN (قیمت/زمان) · MACRO (ماكرو) · QUANT (آمار) — هرکدام با وزن رأی می‌دهند.', 'ARES مدیر ریسک است: هرگز جهت پیش‌بینی نمی‌کند ولی می‌تواند هر معامله را وتو کند (حجم، ضرر روزانه، قرارگیری، اهرم).', 'صفحه هوش مصنوعی دقت هر ایجنت را از نتایج واقعی سیگنال‌های قبلی نشان می‌دهد.'],
+      en: [
+        'When you see NO TRADE, the orange box lists the exact reasons: stale data, low confidence, weak agreement, bad R/R, hostile regime…',
+        'This is a feature, not a bug. Forcing signals in unclear markets is exactly what signal-selling channels do before they blow up accounts.',
+        'Statistically, most hours of most markets are noise. A system that speaks all the time lies most of the time.',
+      ],
+      fa: [
+        'وقتی NO TRADE می‌بینی، کادر نارنجی دلایل رو دقیق لیست میکنه: داده قدیمی، اطمینان پایین، هم‌نظری ضعیف، R/R بد، رجیم نامناسب…',
+        'این قابلیت‌ه نه باگ. سیگنال اجباری دادن در بازار مبهم، دقیقاً همون کاریه که کانال‌های سیگنال‌فروش قبل از آتیش‌زدن حساب‌ها میکنن.',
+        'از نظر آماری بیشتر ساعت‌های بیشتر بازارها نویزه. سیستمی که همیشه حرف میزنه، بیشتر اوقات داره دروغ میگه.',
+      ],
     },
   },
   {
-    icon: '🧪', t: { en: 'Paper trading (practice with real prices)', fa: 'معامله کاغذی (تمرین با قیمت واقعی)' },
+    icon: '📈', t: { en: 'Chart, timeframes, overlays', fa: 'چارت، تایم‌فریم، لایه‌ها' },
     b: {
-      en: ['The button "OPEN PAPER TRADE" on the dashboard becomes active only when consensus AND ARES approve.', 'Want your own setup? The "Positions" menu has a full manual order panel: LONG/SHORT, quantity, stop, TP1-3 — or press "FILL FROM SIGNAL" to load the current signal levels. Live preview of margin, fee and max loss before you open.', 'Fills use the real bid/ask + slippage + 0.1% fee — like a real exchange, but with fake money ($10,000 test account).', 'Track open trades in "Positions", closed ones in "Journal" (CSV export available).', 'The red KILL SWITCH button closes everything and blocks new trades.'],
-      fa: ['دکمه «افتتاح معامله کاغذی» در داشبورد فقط وقتی فعال می‌شود که اجماع و ARES هر دو تأیید کنند.', 'ستاپ خودت را می‌خواهی؟ منوی «معاملات باز» پنل کامل سفارش دستی دارد: LONG/SHORT، حجم، حد ضرر، TP1-3 — یا دکمه «پر کردن از سیگنال» سطوح سیگنال فعلی را بارگذاری می‌کند. قبل از باز کردن، مارجین، کارمزد و حداکثر ضرر را زنده ببین.', 'اجرا با bid/ask واقعی + اسلیپیج + کارمزد ۰.۱٪ — مثل صرافی واقعی ولی با پول آزمایشی (حساب ۱۰ هزار دلاری).', 'معاملات باز در «معاملات باز» و بسته‌شده‌ها در «ژورنال» (خروجی CSV دارد).', 'دکمه قرمز «کلید اضطراری» همه را می‌بندد و معامله جدید را بلاک می‌کند.'],
+      en: [
+        '12 timeframes from 1m to 1w. The MTF chips under the consensus panel show how 5m/15m/1h/4h/1d currently align — conflicts are shown, not hidden.',
+        'Toggles above the chart: EMA20/50, Bollinger, VWAP (indicators) and BOS/CHoCH, Liquidity (EQH/EQL/POC), FVG, Order Blocks, Gann (smart overlays).',
+        'Order Blocks are drawn as full zones (top+bottom lines, OB↑ green / OB↓ red) — only unmitigated ones. FVG zones appear as FVG↑/FVG↓.',
+        'The top bar shows the live price, the data source (BINANCE/BYBIT/OKX) and latency in ms. If you ever see STALE DATA: signals are paused automatically — wait for the feed to recover.',
+      ],
+      fa: [
+        '۱۲ تایم‌فریم از ۱ دقیقه تا هفته. چیپ‌های MTF زیر پنل اجماع نشون میدن 5m/15m/1h/4h/1d الان چقدر هم‌راستان — تضادها نمایش داده میشن، پنهان نمیشن.',
+        'کلیدهای بالای چارت: EMA20/50، بولینگر، VWAP (اندیکاتور) و BOS/CHoCH، نقدینگی (EQH/EQL/POC)، FVG، اوردر‌بلاک، گن (لایه‌های هوشمند).',
+        'اوردر‌بلاک‌ها به‌صورت ناحیه کامل رسم میشن (خط بالا + پایین، OB↑ سبز / OB↓ قرمز) — فقط دست‌نخورده‌ها. FVG هم با FVG↑/FVG↓.',
+        'نوار بالا قیمت زنده، منبع داده (Binance/Bybit/OKX) و تأخیر رو با میلی‌ثانیه نشون میده. اگر STALE DATA دیدی: سیگنال‌دهی خودکار متوقفه — صبر کن فید برگرده.',
+      ],
     },
   },
   {
-    icon: '📈', t: { en: 'Chart & timeframes', fa: 'چارت و تایم‌فریم‌ها' },
+    icon: '🧪', t: { en: 'Paper trading — how to practice', fa: 'معامله کاغذی — چطور تمرین کنی' },
     b: {
-      en: ['12 timeframes from 1m to 1w. Toggle overlays: EMA/BB/VWAP, BOS/CHOCH, liquidity levels, order blocks, Gann.', 'The top bar shows the live price, data source and latency. If it says STALE DATA — wait, signals are paused for your safety.'],
-      fa: ['۱۲ تایم‌فریم از ۱m تا ۱w. لایه‌ها قابل روشن/خاموش کردن: EMA/BB/VWAP، BOS/CHOCH، سطوح نقدینگی، اوردر بلاک، گن.', 'نوار بالا قیمت زنده، منبع داده و تأخیر را نشان می‌دهد. اگر STALE DATA دیدی — صبر کن، سیگنال‌ها برای امنیت تو متوقف شده‌اند.'],
+      en: [
+        'Two ways to open a paper trade:',
+        'a) Dashboard → "OPEN PAPER TRADE" button: uses the current signal — ARES sizes the position for you (default: 0.5% of your balance at risk per trade).',
+        'b) Positions menu → manual order panel: your own side, quantity, SL and TP1-3. Press "FILL FROM SIGNAL" to load the signal levels, or type your own. The panel previews notional, margin, fee and max loss before you click.',
+        'Execution is realistic: you pay the real ask when buying and receive the real bid when selling, plus slippage and 0.1% taker fee — exactly like a real exchange, with $10,000 test money.',
+        'SL/TP are watched on live quotes and execute automatically. The red KILL SWITCH closes everything and blocks new trades.',
+        'Every closed trade lands in the Journal with P&L, R multiple, fees — exportable as CSV.',
+      ],
+      fa: [
+        'دو راه برای باز کردن معامله کاغذی:',
+        'الف) داشبورد → دکمه «افتتاح معامله کاغذی»: از سیگنال فعلی استفاده میکنه — آرس حجم رو برات تعیین میکنه (پیش‌فرض: ۰.۵٪ از موجودی ریسک در هر معامله).',
+        'ب) منوی معاملات باز → پنل سفارش دستی: جهت، حجم، حد ضرر و TP1-3 خودت. با «پر کردن از سیگنال» سطوح لود میشه یا دستی بزن. قبل از کلیک، ارزش/مارجین/کارمزد/حداکثر ضرر رو زنده نشون میده.',
+        'اجرا واقع‌گرایانه‌ست: موقع خرید روی ask واقعی می‌خری و موقع فروش روی bid واقعی می‌فروشی، به‌علاوه اسلیپیج و کارمزد ۰.۱٪ — دقیقاً مثل صرافی واقعی، با ۱۰٬۰۰ دلار پول آزمایشی.',
+        'حد ضرر/هدف‌ها روی قیمت زنده پایش و خودکار اجرا میشن. «کلید اضطراری» قرمز همه رو می‌بنده و معامله جدید رو بلاک میکنه.',
+        'هر معامله بسته‌شده با سود/زیان، R و کارمزد در «ژورنال» ثبت میشه — قابل خروجی CSV.',
+      ],
     },
   },
   {
-    icon: '🧾', t: { en: 'Backtest', fa: 'بک‌تست' },
+    icon: '📊', t: { en: 'Backtesting — manual & automatic', fa: 'بک‌تست — دستی و خودکار' },
     b: {
-      en: ['The Backtest menu runs the strategy on thousands of real historical candles with fees and slippage, plus Monte Carlo and Walk-Forward tests.', 'Manual: press RUN BACKTEST anytime. Automatic: switch AUTO on and it re-runs every 5 minutes on the current symbol/timeframe.', 'Past results NEVER guarantee future profit — this tool measures risk, it does not promise income.'],
-      fa: ['منوی بک‌تست استراتژی را روی هزاران کندل تاریخی واقعی با کارمزد و اسلیپیج اجرا می‌کند به‌علاوه مونت‌کارلو و Walk-Forward.', 'دستی: هر وقت خواستی RUN BACKTEST را بزن. خودکار: AUTO را روشن کن تا هر ۵ دقیقه روی نماد/تایم فعلی دوباره اجرا شود.', 'نتایج گذشته هرگز سود آینده را تضمین نمی‌کند — این ابزار ریسک را می‌سنجد، وعده درآمد نمی‌دهد.'],
+      en: [
+        'Backtest menu: press "RUN BACKTEST" to test the strategy on ~2000 real historical candles of your current symbol/timeframe — with fees and slippage included, decisions made only on closed candles (no cheating with future data).',
+        'Switch AUTO on: it re-runs every 5 minutes automatically and shows the last run time.',
+        'You get: net profit, ROI, win rate, profit factor, expectancy, average R, Sharpe, Sortino, max drawdown, win/lose streaks.',
+        'Monte Carlo (2000 simulations) shows the realistic range of outcomes: P5 to P95, probability of ruin, median drawdown. Walk-Forward checks whether the strategy survives unseen data.',
+        'Read Monte Carlo honestly: if P5 (worst 5% of runs) is a number you cannot afford, the risk settings are too high — lower them in Settings.',
+      ],
+      fa: [
+        'منوی بک‌تست: با «اجرای بک‌تست» استراتژی روی ~2000 کندل تاریخی واقعی همون نماد/تایم اجرا میشه — با کارمزد و اسلیپیج، تصمیم فقط روی کندل بسته‌شده (بدون تقلب با داده آینده).',
+        'AUTO رو روشن کنی: هر ۵ دقیقه خودکار دوباره اجرا میشه و ساعت آخرین اجرا رو نشون میده.',
+        'خروجی: سود خالص، ROI، وین‌ریت، ضریب سود، امید ریاضی، میانگین R، شارپ، سورتینو، بیشترین افت، رشته برد/باخت.',
+        'مونت‌کارلو (۲۰۰۰ شبیه‌سازی) بازه واقع‌بینانه نتایج رو نشون میده: از P5 تا P95، احتمال ورشکستگی، میانه دراودان. Walk-Forward بررسی میکنه استراتژی روی داده ندیده‌شده هم دووم میاره یا نه.',
+        'مونت‌کارلو رو صادقانه بخون: اگه P5 (بدترین ۵٪ حالت‌ها) عددی‌ه که تحملش رو نداری، ریسکت زیاده — از تنظیمات کمش کن.',
+      ],
+    },
+  },
+  {
+    icon: '⚙️', t: { en: 'Settings — what each number does', fa: 'تنظیمات — هر عدد چیکار میکنه' },
+    b: {
+      en: [
+        'Risk % per trade: the % of your balance ARES risks on one trade (default 0.5%). Position size is computed from it: size = (balance × risk%) ÷ stop distance.',
+        'Max risk %: hard ceiling even if you change risk%. Max daily loss %: ARES vetoes new trades after this much is lost in a day. Max exposure %: total open size limit. Max leverage: implied leverage cap.',
+        'Min R/R: setups with lower reward-to-risk are rejected (default 1.3). Min confidence: signals below this are vetoed by ARES — and it also lowers the NO-TRADE floor (never below 30%).',
+        'Data source: AUTO tries Binance → Bybit → OKX; you can force one. Everything you change needs "SAVE SETTINGS" — it persists in this browser.',
+        'Tip for subscribers: keep defaults for 2 weeks, read your journal, then adjust.',
+      ],
+      fa: [
+        'ریسک ٪ هر معامله: درصدی از سرمایه که آرس در هر معامله ریسک میکنه (پیش‌فرض ۰.۵٪). حجم از همین حساب میشه: حجم = (سرمایه × درصد ریسک) ÷ فاصله حد ضرر.',
+        'حداکثر ریسک ٪: سقفی که حتی با تغییر ریسک رد نمیشه. حداکثر ضرر روزانه: بعد از این مقدار ضرر در یک روز، آرس وتو میکنه. حداکثر قرارگیری ٪: سقف مجموع حجم باز. حداکثر اهرم: سقف اهرم ضمنی.',
+        'حداقل R/R: ستاپ‌های پایین‌تر رد میشن (پیش‌فرض 1.3). حداقل اطمینان: سیگنال پایین‌تر از این رو آرس وتو میکنه — و کف موتور NO TRADE هم باهاش میاد پایین (هرگز زیر ۳۰٪ نمیره).',
+        'منبع داده: AUTO اول بایننس، بعد بای‌بیت، بعد OKX؛ میتونی دستی یکی رو قفل کنی. هر تغییری با «ذخیره تنظیمات» در همین مرورگر موندگار میشه.',
+        'نکته برای مشترکین: دو هفته با پیش‌فرض کار کن، ژورنالت رو بخون، بعد تنظیم رو عوض کن.',
+      ],
     },
   },
   {
     icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
     b: {
-      en: ['Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.', 'The badge in the top bar shows your remaining time.', 'When it expires (or the admin disables the account) you are logged out automatically and see the renewal message.', 'Payment: send a message to @persiantrade2025 on Telegram to get the deposit address. After payment, your account is activated and login details are emailed to you.', 'You can change your data source (Binance/Bybit/OKX) and risk settings from the Settings menu.'],
-      fa: ['پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.', 'بج نوار بالا زمان باقی‌مانده را نشان می‌دهد.', 'با پایان مهلت (یا غیرفعال‌سازی توسط مدیر) خودکار خارج شده و پیام تمدید را می‌بینی.', 'واریز: برای دریافت آدرس واریز، در تلگرام به @persiantrade2025 پیام بدهید. بعد از پرداخت، اکانت فعال شده و مشخصات ورود برایتان ایمیل می‌شود — حتماً پوشه Inbox و Spam را چک کنید.', 'منبع داده (Binance/Bybit/OKX) و تنظیمات ریسک از منوی تنظیمات قابل تغییر است.'],
+      en: [
+        'Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.',
+        'How to buy: press "REQUEST PURCHASE / RENEWAL" on the login page, fill your name + email + plan, send it. Then message @persiantrade2025 on Telegram (or email trade@ipeset.com) — you will get the deposit address, pay, and your account + password arrive by email (check Inbox AND Spam).',
+        'The badge in the top bar shows your remaining days — it turns orange under 3 days. When it hits zero you are logged out automatically and see the renewal message.',
+        'Renewal: same request form with type RENEW + your username. Your paper account history stays in your own browser — it is yours, not tied to the subscription.',
+      ],
+      fa: [
+        'پلن‌ها: ۱ ماهه = ۳۰ تتر (USDT) · ۳ ماهه = ۷۰ تتر.',
+        'نحوه خرید: در صفحه ورود دکمه «درخواست خرید / تمدید» رو بزن، نام + ایمیل + پلنت رو بنویس و بفرست. بعد در تلگرام به @persiantrade2025 (یا ایمیل trade@ipeset.com) پیام بده — آدرس واریز رو میگیری، پرداخت میکنی و اکانت + رمز از طریق ایمیل برات میاد (هم Inbox و هم Spam رو چک کن).',
+        'بج بالای صفحه روزهای باقی‌مانده رو نشون میده — زیر ۳ روز نارنجی میشه. با صفر شدن، خودکار خارج میشی و پیام تمدید می‌بینی.',
+        'تمدید: همون فرم درخواست با نوع «تمدید» + نام‌کاربریت. تاریخچه حساب کاغذی در مرورگر خودت می‌مونه — مال توئه و به اشتراک وابسته نیست.',
+      ],
+    },
+  },
+  {
+    icon: '🔞', t: { en: 'Honesty rules of this platform', fa: 'قوانین صداقت این پلتفرم' },
+    b: {
+      en: [
+        'No fake win rates, no fake P&L, no fabricated backtests, no invented AI numbers — everything displayed is computed from real data or your own actions.',
+        'Agent accuracy is earned from real closed signals — it starts empty and fills up honestly over time.',
+        'Live (real-money) trading is not connected on this platform at all. What you see is analysis + paper execution.',
+        'The system can and will be wrong sometimes — markets are probabilistic. Its job is to keep your risk structured when that happens.',
+      ],
+      fa: [
+        'وین‌ریت جعلی، سود ساختگی، بک‌تست قلابی و عدد AI ساخته‌شده وجود نداره — همه‌چی از داده واقعی یا عمل خودت محاسبه میشه.',
+        'دقت ایجنت‌ها از سیگنال‌های واقعی بسته‌شده به‌دست میاد — اول خالیه و با گذشت زمان صادقانه پر میشه.',
+        'اتصال به معامله پول‌واقعی روی این پلتفرم اصلاً وجود نداره. چیزی که می‌بینی تحلیل + اجرای کاغذیه.',
+        'سیستم ممکنه و باید گاهی اشتباه کنه — بازار احتمالاتیه. کارش اینه که وقتی اشتباه شد، ریسک تو ساختارمند بمونه.',
+      ],
     },
   },
   {
     icon: '⚠️', t: { en: 'Important warning', fa: 'هشدار مهم' },
     b: {
-      en: ['Crypto trading involves substantial risk of loss. Persian Trade is an analysis terminal, not a profit machine. Never trade money you cannot afford to lose. Live (real-money) trading is disabled on this platform.', '★ IMPORTANT: If your monthly profit is 3–5%, YOU ARE A SUCCESSFUL TRADER. Do not turn yourself into a loser with greed — protect your capital first.'],
-      fa: ['معامله ارز دیجیتال ریسک از دست دادن سرمایه دارد. پرشین ترید یک ترمینال تحلیلی است، نه ماشین سود. هرگز با پولی که توان از دست دادنش را نداری معامله نکن. معامله واقعی (پول واقعی) در این پلتفرم غیرفعال است.', '★ نکته مهم: اگر سود ماهانه شما ۳ تا ۵ درصد باشد، شما یک تریدر موفق هستید — با طمع کردن خودتان را بازنده نکنید؛ اول سرمایه‌تان را حفظ کنید.'],
+      en: [
+        'Crypto trading involves substantial risk of loss. PersianTrade is an analysis terminal, not a profit machine. Never trade money you cannot afford to lose. Live (real-money) trading is disabled on this platform.',
+        '★ IMPORTANT: If your monthly profit is 3–5%, YOU ARE A SUCCESSFUL TRADER. Do not turn yourself into a loser with greed — protect your capital first.',
+        '★ Never skip the stop-loss because "this time is different". Most blown accounts are one emotional trade wide.',
+        '★ Use paper mode until your own journal shows you are profitable for at least a month. The platform is the same for everyone — the difference is discipline.',
+      ],
+      fa: [
+        'معامله ارز دیجیتال ریسک از دست دادن سرمایه دارد. پرشین ترید یک ترمینال تحلیلی است، نه ماشین سود. هرگز با پولی که توان از دست دادنش را نداری معامله نکن. معامله واقعی (پول واقعی) در این پلتفرم غیرفعال است.',
+        '★ نکته مهم: اگر سود ماهانه شما ۳ تا ۵ درصد باشد، شما یک تریدر موفق هستید — با طمع کردن خودتان را بازنده نکنید؛ اول سرمایه‌تان را حفظ کنید.',
+        '★ هیچ‌وقت حد ضرر رو به این بهون که «این بار فرق داره» حذف نکن. بیشتر حساب‌های آتیش‌زده، فاصله یک معامله احساسی دارن.',
+        '★ تا ژورنال خودت نشون نداده حداقل یک ماه سوددهی، فقط در حالت کاغذی باش. پلتفرم برای همه یکیه — تفاوت در نظم شخصیه.',
+      ],
     },
   },
 ];
