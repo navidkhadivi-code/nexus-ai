@@ -889,7 +889,11 @@ function SettingsScreen({ s, lang }: any) {
         {saved && <span className="small" style={{ color: 'var(--up)' }}>✓ {t('saved', lang)}</span>}
       </div>
       <div className="small muted note">{t('settingsPersistNote', lang)}</div>
-      <button className="btn danger" onClick={() => { if (confirm('Reset paper account?')) s.resetPaper(); }}>Reset Paper Account</button>
+      <div className="save-row">
+        <button className="btn danger" onClick={() => { if (confirm(lang === 'fa' ? 'حساب کاغذی، ژورنال و سیگنال‌ها پاک و ۱۰٬۰۰$ بازسازی شود؟' : 'Reset paper account, journal and signals to $10,000?')) { s.resetPaper(); setSaved(false); alert(lang === 'fa' ? '✓ حساب کاغذی ریست شد' : '✓ Paper account reset'); } }}>
+          🗑 {t('resetPaper', lang)}
+        </button>
+      </div>
     </Panel>
   );
 }

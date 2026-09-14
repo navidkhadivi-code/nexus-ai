@@ -350,8 +350,9 @@ export const useStore = create<State>((set, get) => ({
   },
 
   resetPaper: () => {
-    localStorage.removeItem('nexus_paper_v1');
-    set({ paper: loadAccount() });
+    const fresh = loadAccount();
+    try { localStorage.removeItem('nexus_paper_v1'); saveAccount(fresh); } catch { /* noop */ }
+    set({ paper: fresh, signal: null, signalHistory: [], unreadSignals: 0 });
   },
 
   runBacktest: async (cfg) => {

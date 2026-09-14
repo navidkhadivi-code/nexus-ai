@@ -179,6 +179,7 @@ const dict: Record<string, { en: string; fa: string }> = {
   saved: { en: 'Saved & applied', fa: 'ذخیره و اعمال شد' },
   unsaved: { en: 'unsaved changes', fa: 'تغییرات ذخیره‌نشده' },
   revert: { en: 'REVERT', fa: 'بازگردانی' },
+  resetPaper: { en: 'RESET PAPER ACCOUNT', fa: 'ریست حساب کاغذی' },
   autoSaved: { en: '(auto-saved)', fa: '(خودکار ذخیره میشه)' },
   settingsPersistNote: { en: 'Settings are saved in this browser and persist after refresh. ARES risk checks use these values for every signal.', fa: 'تنظیمات در همین مرورگر ذخیره شده و بعد از رفرش باقی میمانند. چک‌های ریسک ARES از همین مقادیر برای هر سیگنال استفاده میکنند.' },
   commodities: { en: 'Commodities', fa: 'کالاها' },
