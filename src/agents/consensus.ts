@@ -60,9 +60,10 @@ export function runConsensus(ctx: AgentContext, mtfCandles: Record<string, Agent
 
   // NO TRADE engine — first-class state
   const noTradeReasons: string[] = [];
+  const confFloor = Math.min(45, ctx.minConfidence ?? 45); // user setting can lower (never raise past ARES)
   if (!ctx.dataFresh) noTradeReasons.push('STALE MARKET DATA');
   if (direction === 'NEUTRAL') noTradeReasons.push('No directional edge — agents split');
-  if (confidence < 45) noTradeReasons.push(`Confidence ${confidence.toFixed(0)}% below 45% floor`);
+  if (confidence < confFloor) noTradeReasons.push(`Confidence ${confidence.toFixed(0)}% below ${confFloor}% floor`);
   if (agreePct < 55 && direction !== 'NEUTRAL') noTradeReasons.push(`Agent agreement ${agreePct.toFixed(0)}% too weak`);
   if (ctx.quant.volAnn > 2.4) noTradeReasons.push('Extreme volatility regime');
   if (ctx.structure.regime === 'HIGH_VOLATILITY' || ctx.structure.regime === 'CAPITULATION') noTradeReasons.push(`Hostile regime: ${ctx.structure.regime}`);

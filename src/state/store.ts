@@ -539,6 +539,7 @@ async function refreshAnalysis(set: SetPartial, get: () => State) {
       structure, liquidity, orderflow, gann, quant, macro: st.macro,
       funding: st.funding ? { rate: st.funding.rate, openInterest: st.funding.openInterest } : null,
       book: st.book, dataFresh: st.conn === 'LIVE',
+      minConfidence: st.risk.minConfidence,
       st: { rsi: rsi(closes), macdHist: macd(closes).hist, ema20: ema(closes, 20), ema50: ema(closes, 50) },
     };
     const consensus = runConsensus(ctx, mtfCache);

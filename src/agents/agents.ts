@@ -42,6 +42,7 @@ export interface AgentContext {
   funding: { rate: number; openInterest: number } | null;
   book: OrderBook | null;
   dataFresh: boolean;
+  minConfidence?: number; // user floor from Settings (caps the internal NO-TRADE floor)
   st: { rsi: (number | null)[]; macdHist: (number | null)[]; ema20: (number | null)[]; ema50: (number | null)[] };
 }
 
