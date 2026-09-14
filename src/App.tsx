@@ -196,6 +196,7 @@ function Terminal({ s, lang }: any) {
           ) : null}
           <span className="user-badge">{s.auth?.user}{s.auth?.role === 'ADMIN' ? ' ⚙' : ''}</span>
           <button className="lang-btn" onClick={() => void s.authLogout()}>{t('logout', lang)}</button>
+          <button className="lang-btn theme-btn" title={lang === 'fa' ? 'تم روشن/تاریک' : 'Light/Dark theme'} onClick={() => s.setTheme(s.theme === 'dark' ? 'light' : 'dark')}>{s.theme === 'dark' ? '☀️' : '🌙'}</button>
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
         </div>
       </header>
@@ -271,7 +272,7 @@ function Dashboard({ s, lang, prefs, setPrefs, structure }: any) {
             <label key={k} className="pref"><input type="checkbox" checked={(prefs as any)[k]} onChange={() => setPrefs({ ...prefs, [k]: !(prefs as any)[k] })} />{({ ema20: 'EMA20', ema50: 'EMA50', bb: 'Bollinger', vwap: 'VWAP', bos: 'BOS/CHoCH', liquidity: 'Liquidity', fvg: 'FVG', ob: 'Order Blocks', gann: 'Gann' } as Record<string, string>)[k]}</label>
           ))}
         </div>
-        <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann} tf={s.timeframe}
+        <Chart candles={s.candles} prefs={prefs} consensus={cons} structure={structure} liquidity={s.liquidity} gann={s.gann} tf={s.timeframe} theme={s.theme}
           signalLine={s.signal ? { entry: s.signal.entry, stop: s.signal.stop, targets: s.signal.targets } : null} />
       </Panel>
 

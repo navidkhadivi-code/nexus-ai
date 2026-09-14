@@ -20,10 +20,11 @@ interface Props {
   liquidity: LiquidityResult | null;
   gann: GannResult | null;
   tf: string;
+  theme?: 'dark' | 'light';
   signalLine?: { entry: number; stop: number; targets: number[] } | null;
 }
 
-export default function Chart({ candles, prefs, consensus, structure, liquidity, gann, tf, signalLine }: Props) {
+export default function Chart({ candles, prefs, consensus, structure, liquidity, gann, tf, theme, signalLine }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -49,6 +50,17 @@ export default function Chart({ candles, prefs, consensus, structure, liquidity,
   }, []);
 
   const datasetKey = candles.length ? candles[0].t : -1;
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const light = theme === 'light';
+    chart.applyOptions({
+      layout: { background: { type: ColorType.Solid, color: light ? '#ffffff' : '#070b12' }, textColor: light ? '#5b6678' : '#8b98ad' },
+      grid: { vertLines: { color: light ? '#e8ecf2' : '#0e1420' }, horzLines: { color: light ? '#e8ecf2' : '#0e1420' } },
+      timeScale: { borderColor: light ? '#c9d1dd' : '#1a2436' },
+      rightPriceScale: { borderColor: light ? '#c9d1dd' : '#1a2436' },
+    });
+  }, [theme]);
   useEffect(() => {
     const chart = chartRef.current, cs = candleSeries.current, vs = volSeries.current;
     if (!chart || !cs || !vs || !candles.length) return;

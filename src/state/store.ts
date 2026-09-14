@@ -97,6 +97,8 @@ interface State {
   exchange: ExchangePref;
   activeSource: string;
   locale: 'en' | 'fa';
+  theme: 'dark' | 'light';
+  setTheme: (t: 'dark' | 'light') => void;
   candles: Candle[];
   tick: Tick | null;
   book: OrderBook | null;
@@ -140,7 +142,8 @@ type SetPartial = (p: Partial<State> | ((st: State) => Partial<State>)) => void;
 
 const ADAPTERS: Record<string, ExchangeAdapter> = { BINANCE: binanceAdapter, BYBIT: bybitAdapter, OKX: okxAdapter };
 const savedLocale: 'en' | 'fa' = (() => { try { return (localStorage.getItem('nexus_locale') === 'en' ? 'en' : 'fa'); } catch { return 'fa'; } })();
-try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; } catch { /* pre-DOM */ }
+const savedTheme: 'dark' | 'light' = (() => { try { return (localStorage.getItem('nexus_theme') === 'light' ? 'light' : 'dark'); } catch { return 'dark'; } })();
+try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = savedTheme; } catch { /* pre-DOM */ }
 
 const DEFAULT_RISK: RiskConfig = { balance: 10000, riskPct: 0.5, maxRiskPct: 1.5, maxDailyLossPct: 5, maxExposurePct: 60, maxLeverage: 5, minRR: 1.3, minConfidence: 55, dailyLossUsd: 0, openExposureUsd: 0 };
 export const RISK_DEFAULTS: RiskConfig = { ...DEFAULT_RISK };
@@ -245,6 +248,12 @@ export const useStore = create<State>((set, get) => ({
   exchange: loadExchange(),
   activeSource: 'â€”',
   locale: savedLocale,
+  theme: savedTheme,
+  setTheme: (t) => {
+    set({ theme: t });
+    try { localStorage.setItem('nexus_theme', t); } catch { /* noop */ }
+    document.documentElement.dataset.theme = t;
+  },
   candles: [],
   tick: null,
   book: null,
