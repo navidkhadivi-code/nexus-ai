@@ -52,20 +52,26 @@ export function analyzeLiquidity(candles: Candle[], book: OrderBook | null, trad
   }
   const recentSweeps = sweeps.slice(-10);
 
-  // order blocks: last opposite candle before impulse
+  // order blocks: last opposite candle before an impulse move (threshold = volatility-relative)
   const orderBlocks: LiquidityResult['orderBlocks'] = [];
+  const recent40 = candles.slice(-40);
+  const avgRange = recent40.length ? recent40.reduce((a, c) => a + (c.h - c.l), 0) / recent40.length : 0;
+  const lastPx = candles.length ? candles[candles.length - 1].c : 1;
+  const thr = Math.max(lastPx * 0.0012, avgRange * 0.85); // ≥0.12% or 85% of avg bar range
   for (let i = 2; i < candles.length - 1; i++) {
     const a = candles[i - 1], b = candles[i], cc = candles[i + 1];
-    const impulse = (cc.c - b.c) / b.c;
-    if (Math.abs(impulse) > 0.008) {
+    const impulse = cc.c - b.c;
+    if (Math.abs(impulse) > thr) {
       if (b.c < b.o && impulse > 0) orderBlocks.push({ type: 'BULL', top: Math.max(a.h, b.h), bottom: Math.min(a.l, b.l), at: b.t });
       if (b.c > b.o && impulse < 0) orderBlocks.push({ type: 'BEAR', top: Math.max(a.h, b.h), bottom: Math.min(a.l, b.l), at: b.t });
     }
   }
-  const unmitigated = orderBlocks.slice(-60).filter((ob, _, arr) => {
+  // mitigated only when a candle CLOSES inside the zone (wick retest keeps it alive)
+  const unmitigated = orderBlocks.slice(-80).filter(ob => {
     const idx = candles.findIndex(c => c.t === ob.at);
     for (let i = idx + 2; i < candles.length; i++) {
-      if (candles[i].l <= ob.top && candles[i].h >= ob.bottom) return false;
+      const c = candles[i];
+      if (c.c < ob.top && c.c > ob.bottom) return false;
     }
     return true;
   }).slice(-6);

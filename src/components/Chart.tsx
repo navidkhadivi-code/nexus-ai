@@ -115,7 +115,7 @@ export default function Chart({ candles, prefs, consensus, structure, liquidity,
       addPriceLine(signalLine.stop, '#f6465d', 'SL', LineStyle.Solid);
       signalLine.targets.forEach((tp, i) => addPriceLine(tp, '#0ecb81', `TP${i + 1}`, LineStyle.Solid));
     }
-  }, [candles.length, prefs, structure?.regime, liquidity?.poc, gann?.origin.price, signalLine?.entry, consensus?.direction]);
+  }, [candles.length, prefs, structure?.regime, liquidity?.poc, liquidity?.orderBlocks.length, gann?.origin.price, signalLine?.entry, consensus?.direction]);
 
   // live candle update
   useEffect(() => {
