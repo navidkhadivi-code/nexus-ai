@@ -24,19 +24,26 @@ const ANGLES: [string, number][] = [['1x1', 1], ['1x2', 2], ['1x4', 4], ['2x1', 
 export function analyzeGann(candles: Candle[]): GannResult | null {
   if (candles.length < 60) return null;
 
-  // origin = most significant swing low in window
-  let originIdx = 0;
-  for (let i = 0; i < candles.length; i++) {
-    if (i === 0 || candles[i].l < candles[originIdx].l) originIdx = i;
+  // origin = most significant swing low in the RECENT window (last 150 bars) so angles stay relevant
+  const start = Math.max(0, candles.length - 150);
+  let originIdx = start;
+  for (let i = start; i < candles.length; i++) {
+    if (i === start || candles[i].l < candles[originIdx].l) originIdx = i;
   }
   // prefer a fractal low
   const swingsIdx = candles.map((_, i) => i).filter(i =>
-    i > 2 && i < candles.length - 2 &&
+    i > Math.max(2, start) && i < candles.length - 2 &&
     candles[i].l <= Math.min(candles[i - 1].l, candles[i - 2].l, candles[i + 1].l, candles[i + 2].l));
   if (swingsIdx.length) originIdx = swingsIdx.reduce((best, i) => (candles[i].l < candles[best].l ? i : best), swingsIdx[0]);
 
   const origin = candles[originIdx];
-  const unit = origin.l * 0.0015; // price-per-bar unit scaled to instrument (0.15% step)
+  // unit calibrated so the 1x1 angle connects origin swing to CURRENT price (classic Gann fan);
+  // other angles (1x2, 1x4, 2x1, 4x1) fan proportionally around it.
+  const barsSince = Math.max(1, candles.length - 1 - originIdx);
+  const vr = candles.slice(-60);
+  const avgRange = vr.length ? vr.reduce((a, c) => a + (c.h - c.l), 0) / vr.length : origin.l * 0.002;
+  const cur = candles[candles.length - 1].c;
+  const unit = Math.max((cur - origin.l) / barsSince, avgRange * 0.25, origin.l * 0.0004);
 
   const levels: GannLevel[] = [];
   for (const [name, slope] of ANGLES) {
