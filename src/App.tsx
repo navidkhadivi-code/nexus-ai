@@ -145,7 +145,6 @@ function RequestPanel({ lang }: any) {
 
 function GeoNotice({ lang }: any) {
   const [country, setCountry] = useState<string | null>(null);
-  const [hidden, setHidden] = useState(() => { try { return sessionStorage.getItem('geo_dismissed') === '1'; } catch { return false; } });
 
   useEffect(() => {
     fetch('/api/geo.php', { credentials: 'same-origin' })
@@ -160,21 +159,18 @@ function GeoNotice({ lang }: any) {
       });
   }, []);
 
-  if (hidden) return null;
   const isIR = country === 'IR';
   const isForeign = !!country && !isIR;
   if (isForeign) {
     return (
       <div className="geo-bar ok">
         <span>{country} · {t('geoOk', lang)}</span>
-        <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
       </div>
     );
   }
   return (
     <div className={`geo-bar ${isIR ? 'warn' : 'hint'}`}>
       <span>{isIR ? '🇮 IR · ' : ''}{isIR ? t('geoIranWarn', lang) : t('geoHint', lang)}</span>
-      <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
     </div>
   );
 }
