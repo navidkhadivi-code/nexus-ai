@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useStore, RISK_DEFAULTS } from './state/store';
+import { probeSources, getSourceOrder, setSourceOrder, type SourceProbe } from './state/store';
 import { t, fmt, type Lang } from './i18n';
 import Chart, { type ChartPrefs } from './components/Chart';
 import { analyzeStructure } from './engine/structure';
@@ -19,7 +20,7 @@ function daysLeft(exp: number, lang: Lang): string {
   return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
 }
 
-type Screen = 'dashboard' | 'guide' | 'commodities' | 'news' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'users' | 'requests' | 'health';
+type Screen = 'dashboard' | 'guide' | 'commodities' | 'news' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'report' | 'settings' | 'admin' | 'users' | 'requests' | 'health';
 
 export default function App() {
   const s = useStore();
@@ -154,7 +155,7 @@ function Terminal({ s, lang }: any) {
   const NAV: { id: Screen; key: string }[] = [
     { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'commodities', key: 'commodities' }, { id: 'news', key: 'news' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
-    { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
+    { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'report', key: 'report' }, { id: 'settings', key: 'settings' },
     ...(s.auth?.role === 'ADMIN' ? [
       { id: 'admin' as Screen, key: 'admin' },
       { id: 'users' as Screen, key: 'usersNav' },
@@ -225,6 +226,7 @@ function Terminal({ s, lang }: any) {
           {screen === 'positions' && <PositionsScreen s={s} lang={lang} />}
           {screen === 'backtest' && <BacktestScreen s={s} lang={lang} />}
           {screen === 'journal' && <JournalScreen s={s} lang={lang} />}
+          {screen === 'report' && <ReportScreen s={s} lang={lang} />}
           {screen === 'settings' && <SettingsScreen s={s} lang={lang} />}
           {screen === 'admin' && <AdminScreen s={s} lang={lang} />}
           {screen === 'users' && <UsersScreen lang={lang} />}
@@ -793,6 +795,87 @@ function NewsScreen({ lang }: any) {
   );
 }
 
+// ---------------- REPORT CARD (کارنامه معاملاتی) ----------------
+function ReportScreen({ s, lang }: any) {
+  const j = s.paper.journal as any[];
+  if (!j.length) {
+    return <Panel title={t('report', lang)}><div className="empty">{t('reportEmpty', lang)}</div></Panel>;
+  }
+  const total = j.length;
+  const wins = j.filter(x => x.pnlUsd > 0);
+  const winRate = (wins.length / total) * 100;
+  const pnl = j.reduce((a, x) => a + x.pnlUsd, 0);
+  const avgR = j.reduce((a, x) => a + (x.rMultiple || 0), 0) / total;
+  const best = j.reduce((a, x) => x.pnlUsd > (a?.pnlUsd ?? -Infinity) ? x : a, j[0]);
+  const worst = j.reduce((a, x) => x.pnlUsd < (a?.pnlUsd ?? Infinity) ? x : a, j[0]);
+  const byOrigin = (o: string) => j.filter(x => (x.origin || 'manual') === o);
+  const sig = byOrigin('signal'), man = byOrigin('manual');
+  const avgRof = (arr: any[]) => arr.length ? arr.reduce((a, x) => a + (x.rMultiple || 0), 0) / arr.length : null;
+  const srR = avgRof(sig), mrR = avgRof(man);
+  const stops = j.filter(x => x.consensusDir === 'SL').length;
+  const tps = j.filter(x => x.consensusDir === 'TP').length;
+  const holds = j.map(x => x.closedAt - x.openedAt).filter(t => t > 0);
+  const avgHoldMin = holds.length ? holds.reduce((a, b) => a + b, 0) / holds.length / 60000 : 0;
+  const days = new Set(j.map(x => new Date(x.closedAt).toDateString())).size || 1;
+  const perDay = total / days;
+  const risks = j.map(x => x.riskUsd || 0).filter((x: number) => x > 0);
+  const rMean = risks.length ? risks.reduce((a, b) => a + b, 0) / risks.length : 0;
+  const rVar = risks.length > 1 ? Math.sqrt(risks.reduce((a, b) => a + (b - rMean) ** 2, 0) / risks.length) / (rMean || 1) : 0;
+  let streak = 0, cur = 0;
+  for (const x of [...j].sort((a, b) => a.closedAt - b.closedAt)) { cur = x.pnlUsd > 0 ? Math.max(0, cur) + (x.pnlUsd > 0 ? 1 : 0) : (x.pnlUsd < 0 ? -1 : 0); cur = x.pnlUsd > 0 ? (cur > 0 ? cur + 1 : 1) : (cur < 0 ? cur - 1 : -1); streak = Math.min(streak, cur); }
+
+  // discipline score (deterministic, rule-based)
+  let score = 50;
+  if (srR != null && mrR != null) score += Math.max(-15, Math.min(15, Math.round((srR - mrR) * 10)));
+  if (tps > stops) score += 10; else if (stops > tps * 1.5) score -= 10;
+  if (perDay > 8) score -= 10; else if (perDay <= 4) score += 5;
+  if (rVar < 0.35) score += 10; else if (rVar > 0.8) score -= 10;
+  if (avgHoldMin < 5 && total > 10) score -= 10;
+  score = Math.max(0, Math.min(100, score));
+  const grade = score >= 80 ? { k: 'A', tone: 'up' } : score >= 65 ? { k: 'B', tone: 'up' } : score >= 50 ? { k: 'C', tone: '' } : score >= 35 ? { k: 'D', tone: 'down' } : { k: 'E', tone: 'down' };
+
+  const tips: { en: string; fa: string }[] = [];
+  if (srR != null && mrR != null && sig.length >= 3 && man.length >= 3 && mrR < srR) tips.push({ en: 'Your manual trades average lower R than signal-followed trades — follow the system more.', fa: 'میانگین R معاملات دستی‌ات از معاملاتی که با سیگنال گرفته‌ای پایین‌تر است — بیشتر به سیستم پایبند باش.' });
+  if (perDay > 8) tips.push({ en: 'Overtrading detected (more than 8 trades/day). Quality setups are rare by design.', fa: 'معامله بیش از حد (بیش از ۸ در روز). ستاپ باکیفیت عملاً کم پیش می‌آید.' });
+  if (rVar > 0.8) tips.push({ en: 'Inconsistent risk sizing — keep risk per trade fixed (Settings → risk %).', fa: 'ریسک نامتغییر در حجم‌ها — ریسک هر معامله را ثابت نگه دار (تنظیمات).' });
+  if (stops > tps * 1.5) tips.push({ en: 'More stops than targets — consider trading only when consensus confidence is high.', fa: 'استاپ بیشتر از هدف — فقط در اطمینان بالای اجماع وارد شو.' });
+  if (avgHoldMin < 5 && total > 10) tips.push({ en: 'Very short holds — you may be scalping against your own stop distances.', fa: 'مدت نگهداری خیلی کوتاه — شاید علیه فاصله استاپ خودت نوسان‌گیری می‌کنی.' });
+  if (!tips.length) tips.push({ en: 'Solid discipline. Keep the journal as your source of truth.', fa: 'انضباط خوب. ژورنال را مرجع خودت نگه دار.' });
+
+  return (
+    <div>
+      <Panel title={`${t('report', lang)} — ${total} ${t('closedTrades', lang)}`}>
+        <div className="rep-head">
+          <div className={`rep-grade ${grade.tone}`}>{grade.k}<span>{score}/100</span></div>
+          <div className="rep-stats">
+            <Metric label={t('pnl', lang)} value={`$${fmt(pnl, 2, lang)}`} tone={pnl >= 0 ? 'up' : 'down'} />
+            <Metric label={t('winRate', lang)} value={`${fmt(winRate, 1, lang)}%`} />
+            <Metric label="Avg R" value={fmt(avgR, 2, lang)} tone={avgR >= 0 ? 'up' : 'down'} />
+            <Metric label={t('bestTrade', lang)} value={`$${fmt(best.pnlUsd, 2, lang)}`} tone="up" />
+            <Metric label={t('worstTrade', lang)} value={`$${fmt(worst.pnlUsd, 2, lang)}`} tone="down" />
+            <Metric label={t('avgHold', lang)} value={`${fmt(avgHoldMin, 0, lang)} ${t('minUnit', lang)}`} />
+          </div>
+        </div>
+        <div className="rep-split">
+          <div className="card">
+            <h3>📡 {t('viaSignal', lang)} ({sig.length})</h3>
+            <p>{t('avgR', lang)}: <b className={(srR ?? 0) >= 0 ? 'up' : 'down'}>{srR == null ? '—' : fmt(srR, 2, lang)}</b> · TP: {sig.filter(x => x.consensusDir === 'TP').length} · SL: {sig.filter(x => x.consensusDir === 'SL').length}</p>
+          </div>
+          <div className="card">
+            <h3>✋ {t('viaManual', lang)} ({man.length})</h3>
+            <p>{t('avgR', lang)}: <b className={(mrR ?? 0) >= 0 ? 'up' : 'down'}>{mrR == null ? '—' : fmt(mrR, 2, lang)}</b> · TP: {man.filter(x => x.consensusDir === 'TP').length} · SL: {man.filter(x => x.consensusDir === 'SL').length}</p>
+          </div>
+        </div>
+        <div className="tips">
+          <b>{t('coachTitle', lang)}</b>
+          {tips.map((tp, i) => <div key={i} className="tip-row">▸ {(tp as any)[lang]}</div>)}
+        </div>
+        <div className="small muted note">{t('reportNote', lang)}</div>
+      </Panel>
+    </div>
+  );
+}
+
 // ---------------- OTHER SCREENS ----------------
 function OrderFlowScreen({ s, lang }: any) {
   const c = s.consensus;
@@ -1019,7 +1102,13 @@ function BacktestScreen({ s, lang }: any) {
       </div>
       {auto && <div className="small muted note" style={{ marginTop: -4, marginBottom: 10 }}>{t('autoBtNote', lang)}</div>}
       {bt?.metrics && (
-        <div className="grid-metrics">
+        <div>
+          {bt.evalFrom && bt.evalTo ? (
+            <div className="small muted" style={{ marginBottom: 8 }}>
+              {t('evalWindow', lang)}: <b>{new Date(bt.evalFrom).toLocaleDateString()}</b> ← <b>{new Date(bt.evalTo).toLocaleDateString()}</b> · {t('warmupExcluded', lang)}
+            </div>
+          ) : null}
+          <div className="grid-metrics">
           <Metric label={t('netProfit', lang)} value={`$${fmt(bt.metrics.netProfit, 2, lang)}`} tone={bt.metrics.netProfit >= 0 ? 'up' : 'down'} />
           <Metric label={t('winRate', lang)} value={`${bt.metrics.winRate.toFixed(1)}%`} />
           <Metric label={t('profitFactor', lang)} value={bt.metrics.profitFactor === Infinity ? '∞' : bt.metrics.profitFactor.toFixed(2)} />
@@ -1028,6 +1117,7 @@ function BacktestScreen({ s, lang }: any) {
           <Metric label={t('drawdown', lang)} value={`${bt.metrics.maxDrawdownPct.toFixed(1)}%`} tone="down" />
           <Metric label="Avg R" value={bt.metrics.avgR.toFixed(3)} />
           <Metric label={t('tradesCount', lang)} value={String(bt.metrics.trades)} />
+          </div>
         </div>
       )}
       {bt?.mc && (
@@ -1084,6 +1174,47 @@ const RISK_FIELDS: [string, string][] = [
   ['maxExposurePct', 'Max exposure %'], ['maxLeverage', 'Max leverage'], ['minRR', 'Min R/R'], ['minConfidence', 'conf % min'],
 ];
 
+function SourcePanel({ lang }: any) {
+  const [probes, setProbes] = useState<SourceProbe[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [order, setOrder] = useState<string[]>(() => getSourceOrder());
+
+  const test = async () => { setBusy(true); setProbes(await probeSources()); setBusy(false); };
+  const move = (i: number, dir: -1 | 1) => {
+    const n = [...order];
+    const j = i + dir;
+    if (j < 0 || j >= n.length) return;
+    [n[i], n[j]] = [n[j], n[i]];
+    setOrder(n);
+    setSourceOrder(n);
+  };
+  const NAME: Record<string, string> = { BINANCE: 'Binance', BYBIT: 'Bybit', OKX: 'OKX' };
+
+  return (
+    <div className="card" style={{ marginBottom: 12 }}>
+      <h3>📶 {t('sourcesTitle', lang)}</h3>
+      <p className="small muted" style={{ marginBottom: 10 }}>{t('sourceOrderHint', lang)}</p>
+      {order.map((id, i) => {
+        const pr = probes?.find(x => x.id === id);
+        return (
+          <div key={id} className="src-row">
+            <b className="src-idx">{i + 1}</b>
+            <span className="src-name">{NAME[id] ?? id}</span>
+            <span className={`src-lat ${pr ? (pr.ok ? (pr.ms < 500 ? 'up' : '') : 'down') : ''}`}>
+              {pr ? (pr.ok ? `${pr.ms} ms` : t('unreachable', lang)) : '—'}
+            </span>
+            <span className="src-btns">
+              <button className="btn small" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
+              <button className="btn small" disabled={i === order.length - 1} onClick={() => move(i, 1)}>↓</button>
+            </span>
+          </div>
+        );
+      })}
+      <button className="btn sm" disabled={busy} onClick={() => void test()} style={{ marginTop: 8 }}>⚡ {t('testLatency', lang)}</button>
+    </div>
+  );
+}
+
 function SettingsScreen({ s, lang }: any) {
   const [draft, setDraft] = useState<Record<string, number>>(() => ({ ...s.risk }));
   const [saved, setSaved] = useState(false);
@@ -1104,6 +1235,7 @@ function SettingsScreen({ s, lang }: any) {
         <b className="up">{s.activeSource}</b>
         <span className="small muted">{t('autoSaved', lang)}</span>
       </div>
+      <SourcePanel lang={lang} />
       <div className="set-grid">
         {RISK_FIELDS.map(([k, label]) => (
           <label key={k} className="set-row"><span>{k === 'riskPct' ? t('risk', lang) + ' %' : k === 'minConfidence' ? t('confidence', lang) + ' % ' + (lang === 'fa' ? 'حداقل' : 'min') : label}</span>

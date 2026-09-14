@@ -26,6 +26,10 @@ export interface PaperPosition {
   sl: number;
   tp: number[];
   margin: number;
+  confidence: number;
+  regime: string;
+  setupQuality: number;
+  source: 'signal' | 'manual';
   openedAt: number;
   fundingAccrued: number;
   mode: 'PAPER';
@@ -52,6 +56,7 @@ export interface JournalEntry {
   consensusDir: string;
   marketRegime: string;
   setupQuality: number;
+  origin: 'signal' | 'manual';
   openedAt: number;
   closedAt: number;
   mode: 'PAPER';
@@ -95,7 +100,7 @@ function slip(side: 'BUY' | 'SELL', px: number) {
 
 export interface Quote { bid: number; ask: number }
 
-export function openPosition(a: PaperAccount, symbol: string, side: 'LONG' | 'SHORT', qty: number, q: Quote, sl: number, tp: number[], meta: { confidence: number; regime: string; setupQuality: number; rrPlanned: number }): { ok: boolean; reason?: string; pos?: PaperPosition } {
+export function openPosition(a: PaperAccount, symbol: string, side: 'LONG' | 'SHORT', qty: number, q: Quote, sl: number, tp: number[], meta: { confidence: number; regime: string; setupQuality: number; rrPlanned: number; source?: 'signal' | 'manual' }): { ok: boolean; reason?: string; pos?: PaperPosition } {
   if (a.killSwitch) return { ok: false, reason: 'KILL SWITCH ACTIVE — no new trades' };
   if (!(qty > 0) || !isFinite(qty)) return { ok: false, reason: 'Invalid quantity' };
   // idempotency guard (Phase 28): never stack a new fill within 500ms of same-direction order
@@ -109,6 +114,8 @@ export function openPosition(a: PaperAccount, symbol: string, side: 'LONG' | 'SH
   const pos: PaperPosition = {
     id: uid(), symbol, side, qty, entry, mark: side === 'LONG' ? q.bid : q.ask,
     sl, tp, margin, openedAt: Date.now(), fundingAccrued: 0, mode: 'PAPER',
+    confidence: meta.confidence || 0, regime: meta.regime || '', setupQuality: meta.setupQuality || 0,
+    source: meta.source || 'manual',
   };
   a.cash -= fee;
   a.usedMargin += margin;
@@ -137,7 +144,8 @@ export function closePosition(a: PaperAccount, posId: string, q: Quote, reason =
     slippageUsd: (SLIPPAGE_BPS / 10000) * pos.entry * pos.qty * 2,
     pnlUsd: pnl, pnlPct: (pnl / (pos.entry * pos.qty || 1)) * 100,
     rMultiple: risk ? pnl / risk : 0, riskUsd: risk, rrPlanned: 0,
-    confidence: 0, consensusDir: '', marketRegime: '', setupQuality: 0,
+    confidence: pos.confidence ?? 0, consensusDir: reason, marketRegime: pos.regime ?? '', setupQuality: pos.setupQuality ?? 0,
+    origin: pos.source ?? 'manual',
     openedAt: pos.openedAt, closedAt: Date.now(), mode: 'PAPER',
   };
   a.positions.splice(idx, 1);

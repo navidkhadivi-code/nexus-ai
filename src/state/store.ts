@@ -117,7 +117,7 @@ interface State {
   paper: PaperAccount;
   risk: RiskConfig;
   health: HealthState;
-  bt: { metrics: BtMetrics | null; equity: { t: number; v: number }[]; trades: number; mc: McResult | null; wf: ReturnType<typeof walkForward>; running: boolean } | null;
+  bt: { metrics: BtMetrics | null; equity: { t: number; v: number }[]; trades: number; mc: McResult | null; wf: ReturnType<typeof walkForward>; running: boolean; evalFrom?: number; evalTo?: number } | null;
   error: string | null;
 
   init: () => void;
@@ -161,12 +161,42 @@ let started = false;
 let authPolling = false;
 const mtfCache: Record<string, Candle[]> = {};
 
+let sourceOrder: string[] = (() => {
+  try { const s = JSON.parse(localStorage.getItem('nexus_source_order') || 'null'); if (Array.isArray(s) && s.length === 3) return s; } catch { /* default */ }
+  return ['BINANCE', 'BYBIT', 'OKX'];
+})();
+export const getSourceOrder = () => [...sourceOrder];
+export function setSourceOrder(order: string[]): void {
+  sourceOrder = [...order];
+  try { localStorage.setItem('nexus_source_order', JSON.stringify(sourceOrder)); } catch { /* noop */ }
+}
+
+export interface SourceProbe { id: string; ms: number; ok: boolean }
+const PROBE_URLS: Record<string, string> = {
+  BINANCE: 'https://data-api.binance.vision/api/v3/time',
+  BYBIT: 'https://api.bybit.com/v5/market/time',
+  OKX: 'https://www.okx.com/api/v5/public/time',
+};
+export async function probeSources(): Promise<SourceProbe[]> {
+  return Promise.all(Object.entries(PROBE_URLS).map(async ([id, url]) => {
+    const t0 = performance.now();
+    try {
+      const r = await fetch(url);
+      const j = await r.json();
+      const ok = r.ok && (j.serverTime || j.retCode === 0 || j.code === '0');
+      return { id, ms: Math.round(performance.now() - t0), ok: !!ok };
+    } catch {
+      return { id, ms: Math.round(performance.now() - t0), ok: false };
+    }
+  }));
+}
+
 async function pickAdapter(pref: ExchangePref): Promise<ExchangeAdapter> {
-  const order = pref === 'AUTO' ? [binanceAdapter, bybitAdapter, okxAdapter] : [ADAPTERS[pref]];
+  const order = pref === 'AUTO' ? sourceOrder.map(k => ADAPTERS[k]).filter(Boolean) : [ADAPTERS[pref]];
   for (const a of order) {
     if (await a.probe()) return a;
   }
-  throw new Error('All market data sources are unreachable (Binance / Bybit / OKX). Check network â€” data is NEVER fabricated.');
+  throw new Error('All market data sources are unreachable (Binance / Bybit / OKX). Check network - data is NEVER fabricated.');
 }
 
 export const useStore = create<State>((set, get) => ({
@@ -311,7 +341,7 @@ export const useStore = create<State>((set, get) => ({
     if (!ares.allowed) return { ok: false, reason: `ARES VETO: ${ares.vetoReasons.join(' | ')}` };
     const q = { bid: tick.bid, ask: tick.ask };
     const res = openPosition(paper, symbol, consensus.direction === 'LONG' ? 'LONG' : 'SHORT', ares.quantity, q, consensus.stop ?? 0, consensus.targets, {
-      confidence: consensus.confidence, regime: consensus.agents[0]?.market_regime ?? '', setupQuality: consensus.setupQuality, rrPlanned: ares.rr,
+      confidence: consensus.confidence, regime: consensus.agents[0]?.market_regime ?? '', setupQuality: consensus.setupQuality, rrPlanned: ares.rr, source: 'signal',
     });
     saveAccount(paper);
     set({ paper: { ...paper } });
@@ -328,7 +358,7 @@ export const useStore = create<State>((set, get) => ({
     if (sl > 0 && !(side === 'LONG' ? sl < entry : sl > entry)) return { ok: false, reason: side === 'LONG' ? 'Stop must be BELOW entry for LONG' : 'Stop must be ABOVE entry for SHORT' };
     const tps = tp.filter(t => t > 0 && (side === 'LONG' ? t > entry : t < entry));
     const res = openPosition(paper, symbol, side, qty, q, sl > 0 ? sl : entry * (side === 'LONG' ? 0.98 : 1.02), tps.length ? tps : [entry * (side === 'LONG' ? 1.02 : 0.98)], {
-      confidence: 0, regime: 'MANUAL', setupQuality: 0, rrPlanned: 0,
+      confidence: 0, regime: 'MANUAL', setupQuality: 0, rrPlanned: 0, source: 'manual',
     });
     saveAccount(paper);
     set({ paper: { ...paper } });
@@ -373,7 +403,7 @@ export const useStore = create<State>((set, get) => ({
       const mc = monteCarlo(res.trades, DEFAULT_BT.initialBalance);
       const wf = walkForward(full);
       try { localStorage.setItem('nexus_bt_last', String(Date.now())); } catch { /* noop */ }
-      set({ bt: { metrics: res.metrics, equity: res.equity, trades: res.trades.length, mc, wf, running: false } });
+      set({ bt: { metrics: res.metrics, equity: res.equity, trades: res.trades.length, mc, wf, running: false, evalFrom: res.evalFrom, evalTo: res.evalTo } });
     } catch (e) {
       set({ bt: null, error: String(e) });
     }

@@ -12,6 +12,7 @@ export interface BtConfig {
   initialBalance: number;
   stopAtrMult: number;
   targetAtrMult: number;
+  warmupBars: number;   // bars used only to prime indicators — never scored
 }
 
 export interface BtTrade {
@@ -25,23 +26,24 @@ export interface BtMetrics {
   maxDrawdownPct: number; trades: number; losingStreak: number; winningStreak: number;
 }
 
-export const DEFAULT_BT: BtConfig = { feeRate: 0.001, slippageBps: 3, riskPct: 0.5, initialBalance: 10000, stopAtrMult: 1.5, targetAtrMult: 3 };
+export const DEFAULT_BT: BtConfig = { feeRate: 0.001, slippageBps: 3, riskPct: 0.5, initialBalance: 10000, stopAtrMult: 1.5, targetAtrMult: 3, warmupBars: 120 };
 
 // Strategy: structure-trend + EMA filter + RSI guard. Deterministic.
-export function backtest(candles: Candle[], cfg: BtConfig = DEFAULT_BT): { trades: BtTrade[]; equity: { t: number; v: number }[]; metrics: BtMetrics } {
+export function backtest(candles: Candle[], cfg: BtConfig = DEFAULT_BT): { trades: BtTrade[]; equity: { t: number; v: number }[]; metrics: BtMetrics; evalFrom: number; evalTo: number } {
   const closes = candles.map(c => c.c);
   const e20 = ema(closes, 20), e50 = ema(closes, 50);
   const r = rsi(closes, 14);
   const a = atr(candles, 14);
   const struct: ReturnType<typeof analyzeStructure>[] = [];
   const STRIDE = 10;
-  let structCurrent = analyzeStructure(candles.slice(0, Math.min(candles.length, 120)));
+  const WARMUP = Math.max(60, cfg.warmupBars || 120);
+  let structCurrent = analyzeStructure(candles.slice(0, Math.min(candles.length, WARMUP)));
   const trades: BtTrade[] = [];
   let balance = cfg.initialBalance;
   const equity: { t: number; v: number }[] = [];
   let pos: { side: 'LONG' | 'SHORT'; entry: number; qty: number; sl: number; tp: number; openTime: number } | null = null;
 
-  for (let i = 120; i < candles.length - 1; i++) {
+  for (let i = WARMUP; i < candles.length - 1; i++) {
     if (i % STRIDE === 0) structCurrent = analyzeStructure(candles.slice(Math.max(0, i - 400), i + 1));
     const c = candles[i];
     const atrV = a[i] ?? (c.c * 0.005);
@@ -102,7 +104,12 @@ export function backtest(candles: Candle[], cfg: BtConfig = DEFAULT_BT): { trade
     balance += pnl;
     trades.push({ entryTime: pos.openTime, exitTime: lastC.t, side: pos.side, entry: pos.entry, exit: lastC.c, qty: pos.qty, pnl, r: 0, reason: 'EOD' });
   }
-  return { trades, equity, metrics: computeMetrics(trades, equity, cfg.initialBalance) };
+  return {
+    trades, equity,
+    metrics: computeMetrics(trades, equity, cfg.initialBalance),
+    evalFrom: candles[WARMUP]?.t ?? 0,
+    evalTo: candles[candles.length - 1]?.t ?? 0,
+  };
 }
 
 export function computeMetrics(trades: BtTrade[], equity: { t: number; v: number }[], initial: number): BtMetrics {
