@@ -231,11 +231,12 @@ function Terminal({ s, lang }: any) {
         </main>
       </div>
       <footer className="statusbar">
-        <span>{t('paperNote', lang)}</span>
-        <span>{t('welcome', lang)}</span>
-        <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer"><img src="./telegram.svg" className="tg-ic" alt="" /> @persiantrade2025</a>
-        <a className="tg-link" href="mailto:trade@ipeset.com">✉️ trade@ipeset.com</a>
-        <span className="mono">engine {s.health.engineMs}ms · up {Math.floor(s.health.uptimeSec / 60)}m</span>
+        <span className="sb-note">{t('paperNote', lang)}</span>
+        <div className="sb-contacts">
+          <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer"><img src="./telegram.svg" className="tg-ic" alt="" />@persiantrade2025</a>
+          <a className="tg-link" href="mailto:trade@ipeset.com">✉️ trade@ipeset.com</a>
+        </div>
+        <span className="mono sb-engine">engine {s.health.engineMs}ms · up {Math.floor(s.health.uptimeSec / 60)}m</span>
       </footer>
     </div>
   );
