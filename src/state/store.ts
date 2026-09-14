@@ -111,6 +111,8 @@ interface State {
   gann: GannResult | null;
   signal: LiveSignal | null;
   signalHistory: LiveSignal[];
+  unreadSignals: number;
+  markSignalsSeen: () => void;
   agentPerf: AgentPerf[];
   paper: PaperAccount;
   risk: RiskConfig;
@@ -225,6 +227,8 @@ export const useStore = create<State>((set, get) => ({
   gann: null,
   signal: null,
   signalHistory: [],
+  unreadSignals: 0,
+  markSignalsSeen: () => set({ unreadSignals: 0 }),
   agentPerf: [],
   paper: loadAccount(),
   risk: loadRisk(),
@@ -482,7 +486,10 @@ function tickSignal(get: () => State, set: SetPartial) {
     }
   }
   if (changed) {
-    set({ signal: s.status === 'STOP' || s.status === 'TP3' ? null : s });
+    set(st => ({
+      signal: s.status === 'STOP' || s.status === 'TP3' ? null : s,
+      unreadSignals: st.unreadSignals + 1,
+    }));
     if (s.status === 'STOP' || s.status === 'TP3') {
       set(st2 => {
         const hist = [s, ...st2.signalHistory].slice(0, 50);
@@ -564,7 +571,7 @@ async function refreshAnalysis(set: SetPartial, get: () => State) {
         createdAt: Date.now(), dataSource: `${st.activeSource} LIVE`,
         agentDirs: Object.fromEntries(consensus.agents.map(a => [a.agent, a.direction])),
       };
-      set({ signal: sig });
+      set(st => ({ signal: sig, unreadSignals: st.unreadSignals + 1 }));
     }
   } finally {
     refreshing = false;

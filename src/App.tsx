@@ -146,6 +146,7 @@ function Terminal({ s, lang }: any) {
   const [prefs, setPrefs] = useState<ChartPrefs>({ ema20: true, ema50: true, bb: false, vwap: true, bos: true, liquidity: true, fvg: true, ob: true, gann: false });
 
   useEffect(() => { s.init(); }, []);
+  useEffect(() => { if (screen === 'signals') s.markSignalsSeen(); }, [screen]);
 
   const structure = useMemo(() => s.candles.length > 60 ? analyzeStructure(s.candles) : null, [s.candles.length]);
 
@@ -200,7 +201,10 @@ function Terminal({ s, lang }: any) {
       <div className="body">
         <nav className="sidebar">
           {NAV.map(n => (
-            <button key={n.id} className={screen === n.id ? 'nav active' : 'nav'} onClick={() => setScreen(n.id)}>{t(n.key, lang)}</button>
+            <button key={n.id} className={screen === n.id ? 'nav active' : 'nav'} onClick={() => setScreen(n.id)}>
+              {t(n.key, lang)}
+              {n.id === 'signals' && s.unreadSignals > 0 && <span className="nav-badge">{s.unreadSignals > 9 ? '+9' : s.unreadSignals}</span>}
+            </button>
           ))}
           <div className="side-foot">
             <div className="stale-note">{s.conn === 'STALE' ? t('staleStop', lang) : ''}</div>
