@@ -613,7 +613,7 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
     icon: '👤', t: { en: 'Your subscription', fa: 'اشتراک شما' },
     b: {
       en: [
-        'Plans: 1-MONTH = 30 USDT (Tether) · 3-MONTH = 70 USDT.',
+        'Plans: 1-MONTH = 13 USDT (Tether) · 3-MONTH = 29 USDT.',
         'How to buy: press "REQUEST PURCHASE / RENEWAL" on the login page, fill your name + email + plan, send it. Then message @persiantrade2025 on Telegram (or email trade@ipeset.com) — you will get the deposit address, pay, and your account + password arrive by email (check Inbox AND Spam).',
         'The badge in the top bar shows your remaining days — it turns orange under 3 days. When it hits zero you are logged out automatically and see the renewal message.',
         'Renewal: same request form with type RENEW + your username. Your paper account history stays in your own browser — it is yours, not tied to the subscription.',
