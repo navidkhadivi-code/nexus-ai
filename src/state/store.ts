@@ -142,7 +142,7 @@ type SetPartial = (p: Partial<State> | ((st: State) => Partial<State>)) => void;
 
 const ADAPTERS: Record<string, ExchangeAdapter> = { BINANCE: binanceAdapter, BYBIT: bybitAdapter, OKX: okxAdapter };
 const savedLocale: 'en' | 'fa' = (() => { try { return (localStorage.getItem('nexus_locale') === 'en' ? 'en' : 'fa'); } catch { return 'fa'; } })();
-const savedTheme: 'dark' | 'light' = (() => { try { return (localStorage.getItem('nexus_theme') === 'dark' ? 'dark' : 'light'); } catch { return 'light'; } })();
+const savedTheme: 'dark' | 'light' = (() => { try { return (localStorage.getItem('nexus_theme') === 'light' ? 'light' : 'dark'); } catch { return 'dark'; } })();
 try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; document.documentElement.dataset.theme = savedTheme; } catch { /* pre-DOM */ }
 
 const DEFAULT_RISK: RiskConfig = { balance: 10000, riskPct: 0.5, maxRiskPct: 1.5, maxDailyLossPct: 5, maxExposurePct: 60, maxLeverage: 5, minRR: 1.3, minConfidence: 55, dailyLossUsd: 0, openExposureUsd: 0 };

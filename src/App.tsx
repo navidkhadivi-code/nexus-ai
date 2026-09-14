@@ -38,14 +38,19 @@ function LoginScreen({ s, lang }: any) {
   const [p, setP] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   if (s.auth.error === 'backend-unavailable') {
     return <div className="boot-screen"><img src="./logo.png" className="logo-img" alt="" /><div className="brand-name">{t('appTitle', lang)}</div><div className="muted small">{t('authUnavailable', lang)}</div></div>;
   }
 
+  const uErr = touched && !u.trim() ? t('reqUserErr', lang) : '';
+  const pErr = touched && p.length < 8 ? t('reqPassErr', lang) : '';
+
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!u || !p) return;
+    setTouched(true);
+    if (!u.trim() || p.length < 8) return;
     setBusy(true); setErr('');
     const r = s.auth.setupRequired ? await s.authSetup(u, p) : await s.authLogin(u, p);
     setBusy(false);
@@ -60,7 +65,7 @@ function LoginScreen({ s, lang }: any) {
   if (s.auth.reason) {
     return (
       <div className="boot-screen">
-        <img src="./logo.png" className="logo-img" alt="" />
+        <img src="./logo.png" className="logo-img big" alt="" />
         <div className="brand-name">{t(s.auth.reason === 'expired' ? 'expiredMsg' : 'disabledMsg', lang)}</div>
         <button className="btn" onClick={() => window.location.reload()}>{t('login', lang)}</button>
       </div>
@@ -69,7 +74,7 @@ function LoginScreen({ s, lang }: any) {
 
   return (
     <div className="boot-screen">
-      <form className="login-card" onSubmit={submit}>
+      <form className="login-card" onSubmit={submit} noValidate>
         <img src="./logo.png" className="logo-img big" alt="" />
         <div className="brand-name">{t('appTitle', lang)}</div>
         <div className="muted small">{t('tagline', lang)}</div>
@@ -78,10 +83,16 @@ function LoginScreen({ s, lang }: any) {
           <button type="button" className={`chip ${lang === 'fa' ? 'on' : ''}`} onClick={() => s.setLocale('fa')}>فارسی</button>
         </div>
         {s.auth.setupRequired && <div className="of-row warn">{t('createAdminFirst', lang)}</div>}
-        <input className="inp" placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} autoComplete="username" autoFocus />
-        <input className="inp" placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} autoComplete={s.auth.setupRequired ? 'new-password' : 'current-password'} />
-        {err && <div className="of-row warn">{err}</div>}
-        <button className="btn primary" disabled={busy || !u || p.length < 8}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
+        <div className="field">
+          <input className={`inp ${uErr ? 'err' : ''}`} placeholder={t('username', lang)} value={u} onChange={e => setU(e.target.value)} onBlur={() => setTouched(true)} autoComplete="username" autoFocus />
+          {uErr && <div className="field-err">⛔ {uErr}</div>}
+        </div>
+        <div className="field">
+          <input className={`inp ${pErr ? 'err' : ''}`} placeholder={t('password', lang)} type="password" value={p} onChange={e => setP(e.target.value)} onBlur={() => setTouched(true)} autoComplete={s.auth.setupRequired ? 'new-password' : 'current-password'} />
+          {pErr && <div className="field-err">⛔ {pErr}</div>}
+        </div>
+        {err && <div className="field-err server">⛔ {err}</div>}
+        <button className="btn primary" disabled={busy}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
         <div className="small muted">{t('plansInfo', lang)}</div>
         <div className="row-gap" style={{ justifyContent: 'center', marginTop: 0 }}>
           <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer"><img src="./telegram.svg" className="tg-ic" alt="" /> {t('adminContact', lang)}</a>
@@ -98,13 +109,17 @@ function RequestPanel({ lang }: any) {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [touched, setTouched] = useState(false);
   const [f, setF] = useState({ name: '', contact: '', type: 'buy', plan: '1m', username: '', note: '', hp: '' });
   const set = (k: string, v: string) => setF(x => ({ ...x, [k]: v }));
 
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.contact.trim());
+  const nameErr = touched && f.name.trim().length < 2 ? t('reqNameErr', lang) : '';
+  const mailErr = touched && !emailOk ? t('reqMailErr', lang) : '';
+
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr('');
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.contact.trim());
-    if (f.name.length < 2 || !emailOk) { setErr(t('reqFillErr', lang)); return; }
+    e.preventDefault(); setErr(''); setTouched(true);
+    if (f.name.trim().length < 2 || !emailOk) return;
     setBusy(true);
     const r = await adminApi.contact({ ...f, contact: f.contact.trim().toLowerCase() });
     setBusy(false);
@@ -119,9 +134,15 @@ function RequestPanel({ lang }: any) {
         <button className="btn primary" onClick={() => setOpen(true)}>🛒 {t('requestBtn', lang)}</button>
       ) : (
         <form className="login-card" onSubmit={submit}>
-          <div className="brand-name" style={{ fontSize: 14, letterSpacing: 1 }}>{t('requestTitle', lang)}</div>
-          <input className="inp" placeholder={t('reqName', lang)} value={f.name} onChange={e => set('name', e.target.value)} />
-          <input className="inp" type="email" placeholder={t('reqContact', lang)} value={f.contact} onChange={e => set('contact', e.target.value)} required autoComplete="email" />
+          <div className="brand-name" style={{ fontSize: 16, letterSpacing: 1 }}>{t('requestTitle', lang)}</div>
+          <div className="field">
+            <input className={`inp ${nameErr ? 'err' : ''}`} placeholder={t('reqName', lang)} value={f.name} onChange={e => set('name', e.target.value)} onBlur={() => setTouched(true)} />
+            {nameErr && <div className="field-err">⛔ {nameErr}</div>}
+          </div>
+          <div className="field">
+            <input className={`inp ${mailErr ? 'err' : ''}`} type="email" placeholder={t('reqContact', lang)} value={f.contact} onChange={e => set('contact', e.target.value)} onBlur={() => setTouched(true)} autoComplete="email" />
+            {mailErr && <div className="field-err">⛔ {mailErr}</div>}
+          </div>
           <div className="mt-side">
             <button type="button" className={`chip ${f.type === 'buy' ? 'on' : ''}`} onClick={() => set('type', 'buy')}>{t('reqBuy', lang)}</button>
             <button type="button" className={`chip ${f.type === 'renew' ? 'on' : ''}`} onClick={() => set('type', 'renew')}>{t('reqRenew', lang)}</button>
@@ -134,7 +155,7 @@ function RequestPanel({ lang }: any) {
           {f.type === 'renew' && <input className="inp" placeholder={t('reqUsername', lang)} value={f.username} onChange={e => set('username', e.target.value)} />}
           <textarea className="inp" rows={2} placeholder={t('reqNote', lang)} value={f.note} onChange={e => set('note', e.target.value)} />
           <input type="text" name="hp" tabIndex={-1} autoComplete="off" value={f.hp} onChange={e => set('hp', e.target.value)} style={{ display: 'none' }} />
-          {err && <div className="of-row warn">{err}</div>}
+          {err && <div className="field-err server">⛔ {err}</div>}
           <button className="btn primary" disabled={busy}>{busy ? '…' : t('reqSend', lang)}</button>
           <button type="button" className="btn" onClick={() => setOpen(false)}>{t('cancel', lang)}</button>
         </form>

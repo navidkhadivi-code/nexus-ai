@@ -452,10 +452,18 @@ textarea.inp { resize: vertical; font-family: inherit; }
 .cmdty-price.na { font-size: 14px; color: var(--amber); }
 .cmdty-chg { font-size: 11px; color: var(--muted); }
 .cmdty-spark { width: 100%; height: 54px; margin-top: 8px; }
-.login-card { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 30px 28px; width: 340px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
-.login-card .logo-img.big { margin: 0 auto; }
-.login-card .brand-name { letter-spacing: 3px; font-size: 18px; }
-.login-card .inp { width: 100%; }
+.login-card { display: flex; flex-direction: column; gap: 14px; background: var(--panel); border: 1px solid var(--line2); border-radius: 18px; padding: 38px 34px; width: 460px; box-shadow: 0 20px 60px #0009; text-align: center; align-items: stretch; }
+.login-card .logo-img.big { margin: 0 auto; height: 96px; border-radius: 20px; }
+.login-card .brand-name { letter-spacing: 3px; font-size: 26px; font-weight: 800; }
+.login-card .muted.small { font-size: 13.5px; margin-top: -6px; }
+.login-card .inp { width: 100%; font-size: 16.5px; padding: 14px 16px; }
+.login-card .btn.primary { font-size: 16px; padding: 14px; }
+.login-card .chip { font-size: 13px; padding: 6px 14px; }
+.login-card .small.muted { font-size: 12px; line-height: 1.9; }
+.field { display: flex; flex-direction: column; gap: 5px; text-align: start; }
+.inp.err { border-color: var(--down) !important; background: rgba(246, 70, 93, .06); box-shadow: 0 0 0 3px rgba(246, 70, 93, .13); }
+.field-err { color: var(--down); font-size: 12.5px; font-weight: 700; text-align: start; }
+.field-err.server { text-align: center; background: rgba(246,70,93,.1); border: 1px solid rgba(246,70,93,.4); border-radius: 9px; padding: 9px 12px; }
 .mode-badge.plan { background: #0ecb8118; color: var(--up); border: 1px solid #0ecb8144; font-size: 11.5px; padding: 5px 11px; }
 .mode-badge.plan.warn { background: #ffb34722; color: var(--amber); border-color: #ffb34766; }
 .mode-badge.admin { background: #b46bff1a; color: var(--violet); border: 1px solid #b46bff44; }
