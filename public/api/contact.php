@@ -64,7 +64,7 @@ nexus_audit('contact_request', 'public', $type . ' ' . $plan . ' from ' . $name)
 
 // confirmation email to the requester
 $typeName = $type === 'buy' ? 'خرید اشتراک / Purchase' : 'تمدید اشتراک / Renewal';
-$planName = $plan === '1m' ? '۱ ماهه — ۳۰ تتر (1 MONTH — 13 USDT)' : '۳ ماهه — ۷۰ تتر (3 MONTHS — 29 USDT)';
+$planName = $plan === '1m' ? '۱ ماهه — ۱۳ تتر (1 MONTH — 13 USDT)' : '۳ ماهه — ۲۹ تتر (3 MONTHS — 29 USDT)';
 $confBody = "سلام {$name}،\n\nدرخواست شما در Persian Trade ثبت شد:\n"
     . "نوع: {$typeName}\nپلن: {$planName}\n\n"
     . "پس از تأیید پرداخت، نام‌کاربری و رمز عبور شما از طریق همین ایمیل ارسال می‌شود.\n"
