@@ -127,6 +127,7 @@ interface State {
   setLocale: (l: 'en' | 'fa') => void;
   setRisk: (r: Partial<RiskConfig>) => void;
   saveRisk: (r: Partial<RiskConfig>) => void;
+  resetRiskDefaults: () => void;
   openPaperTrade: () => { ok: boolean; reason?: string };
   openManualTrade: (side: 'LONG' | 'SHORT', qty: number, sl: number, tp: number[]) => { ok: boolean; reason?: string };
   closePaperTrade: (id: string) => void;
@@ -142,6 +143,7 @@ const savedLocale: 'en' | 'fa' = (() => { try { return (localStorage.getItem('ne
 try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; } catch { /* pre-DOM */ }
 
 const DEFAULT_RISK: RiskConfig = { balance: 10000, riskPct: 0.5, maxRiskPct: 1.5, maxDailyLossPct: 5, maxExposurePct: 60, maxLeverage: 5, minRR: 1.3, minConfidence: 55, dailyLossUsd: 0, openExposureUsd: 0 };
+export const RISK_DEFAULTS: RiskConfig = { ...DEFAULT_RISK };
 function loadRisk(): RiskConfig {
   try { const s = JSON.parse(localStorage.getItem('nexus_risk_v1') || 'null'); if (s && typeof s === 'object') return { ...DEFAULT_RISK, ...s }; } catch { /* fresh */ }
   return { ...DEFAULT_RISK };
@@ -295,6 +297,10 @@ export const useStore = create<State>((set, get) => ({
     const next = { ...get().risk, ...r };
     set({ risk: next });
     try { localStorage.setItem('nexus_risk_v1', JSON.stringify(next)); } catch { /* quota */ }
+  },
+  resetRiskDefaults: () => {
+    set({ risk: { ...DEFAULT_RISK } });
+    try { localStorage.setItem('nexus_risk_v1', JSON.stringify(DEFAULT_RISK)); } catch { /* noop */ }
   },
 
   openPaperTrade: () => {

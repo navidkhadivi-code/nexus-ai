@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useStore } from './state/store';
+import { useStore, RISK_DEFAULTS } from './state/store';
 import { t, fmt, type Lang } from './i18n';
 import Chart, { type ChartPrefs } from './components/Chart';
 import { analyzeStructure } from './engine/structure';
@@ -887,6 +887,7 @@ function SettingsScreen({ s, lang }: any) {
         {dirty && <button className="btn" onClick={revert}>{t('revert', lang)}</button>}
         {dirty && <span className="small" style={{ color: 'var(--amber)' }}>● {t('unsaved', lang)}</span>}
         {saved && <span className="small" style={{ color: 'var(--up)' }}>✓ {t('saved', lang)}</span>}
+        <button className="btn" onClick={() => { if (confirm(lang === 'fa' ? 'تنظیمات به مقادیر پیش‌فرض سیستم برگردد؟' : 'Restore system default settings?')) { s.resetRiskDefaults(); setDraft({ ...RISK_DEFAULTS }); setSaved(false); } }}>⟲ {t('resetDefaults', lang)}</button>
       </div>
       <div className="small muted note">{t('settingsPersistNote', lang)}</div>
       <div className="save-row">
