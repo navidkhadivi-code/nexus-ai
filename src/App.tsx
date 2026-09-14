@@ -10,7 +10,7 @@ import { adminApi } from './api/adminClient';
 import { fetchCommodities } from './api/commodities';
 import { fetchNews, NEWS_TOPICS, ago, type NewsItem } from './api/news';
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'PAXGUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'TRXUSDT', 'AVAXUSDT', 'LINKUSDT', 'SUIUSDT', 'DOTUSDT', 'LTCUSDT', 'BCHUSDT', 'NEARUSDT', 'APTUSDT', 'PAXGUSDT'];
 
 function daysLeft(exp: number, lang: Lang): string {
   const ms = exp - Date.now();

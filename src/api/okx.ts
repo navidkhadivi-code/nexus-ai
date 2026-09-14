@@ -2,9 +2,9 @@ import { jget, type Candle, type ExchangeAdapter, type FundingInfo, type OrderBo
 
 const REST = 'https://www.okx.com';
 
-// Binance-style symbol → OKX instId
+// Binance-style symbol → OKX instId (any BASE-USDT/USDC/USD pair)
 function inst(symbol: string): string {
-  const m = symbol.match(/^(BTC|ETH|SOL|BNB|XRP|DOGE|ADA|LTC|AVAX|DOT)(USDT|USDC|USD)$/i);
+  const m = symbol.match(/^([A-Z]+)(USDT|USDC|USD)$/i);
   return m ? `${m[1].toUpperCase()}-${m[2].toUpperCase()}` : symbol;
 }
 
