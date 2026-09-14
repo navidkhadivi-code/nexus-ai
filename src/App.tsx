@@ -7,6 +7,7 @@ import { TIMEFRAMES, type Timeframe } from './api/binance';
 import { exportCsv } from './paper/engine';
 import { adminApi } from './api/adminClient';
 import { fetchCommodities } from './api/commodities';
+import { fetchNews, NEWS_TOPICS, ago, type NewsItem } from './api/news';
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'PAXGUSDT'];
 
@@ -18,7 +19,7 @@ function daysLeft(exp: number, lang: Lang): string {
   return d > 0 ? `${d}${t('dayUnit', lang)} ${h}${t('hourUnit', lang)}` : `${h}${t('hourUnit', lang)}`;
 }
 
-type Screen = 'dashboard' | 'guide' | 'commodities' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'users' | 'requests' | 'health';
+type Screen = 'dashboard' | 'guide' | 'commodities' | 'news' | 'orderflow' | 'liquidity' | 'ai' | 'signals' | 'positions' | 'backtest' | 'journal' | 'settings' | 'admin' | 'users' | 'requests' | 'health';
 
 export default function App() {
   const s = useStore();
@@ -151,7 +152,7 @@ function Terminal({ s, lang }: any) {
   const structure = useMemo(() => s.candles.length > 60 ? analyzeStructure(s.candles) : null, [s.candles.length]);
 
   const NAV: { id: Screen; key: string }[] = [
-    { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'commodities', key: 'commodities' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
+    { id: 'dashboard', key: 'dashboard' }, { id: 'guide', key: 'guide' }, { id: 'commodities', key: 'commodities' }, { id: 'news', key: 'news' }, { id: 'orderflow', key: 'orderFlow' }, { id: 'liquidity', key: 'liquidity' },
     { id: 'ai', key: 'aiIntelligence' }, { id: 'signals', key: 'signals' }, { id: 'positions', key: 'positions' },
     { id: 'backtest', key: 'backtest' }, { id: 'journal', key: 'journal' }, { id: 'settings', key: 'settings' },
     ...(s.auth?.role === 'ADMIN' ? [
@@ -216,6 +217,7 @@ function Terminal({ s, lang }: any) {
           {screen === 'dashboard' && <Dashboard s={s} lang={lang} prefs={prefs} setPrefs={setPrefs} structure={structure} />}
           {screen === 'guide' && <GuideScreen lang={lang} />}
           {screen === 'commodities' && <CommoditiesScreen lang={lang} />}
+          {screen === 'news' && <NewsScreen lang={lang} />}
           {screen === 'orderflow' && <OrderFlowScreen s={s} lang={lang} />}
           {screen === 'liquidity' && <LiquidityScreen s={s} lang={lang} structure={structure} />}
           {screen === 'ai' && <AiScreen s={s} lang={lang} />}
@@ -739,6 +741,54 @@ function CommoditiesScreen({ lang }: any) {
         </div>
       </div>
       <div className="small muted note">{t('cmdtyPollNote', lang)}</div>
+    </div>
+  );
+}
+
+function NewsScreen({ lang }: any) {
+  const [topic, setTopic] = useState('crypto');
+  const [items, setItems] = useState<NewsItem[] | null>(null);
+  const [err, setErr] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const load = async (tKey: string) => {
+    setBusy(true); setErr(false); setItems(null);
+    try {
+      const it = await fetchNews(tKey);
+      setItems(it);
+    } catch {
+      setErr(true); setItems([]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => { void load(topic); }, [topic]);
+  useEffect(() => {
+    const id = window.setInterval(() => void load(topic), 10 * 60000); // cache TTL on server is 10 min too
+    return () => clearInterval(id);
+  }, [topic]);
+
+  return (
+    <div>
+      <div className="bt-ctrl">
+        {NEWS_TOPICS.map(tp => (
+          <button key={tp.key} className={`chip ${topic === tp.key ? 'on' : ''}`} onClick={() => setTopic(tp.key)}>{lang === 'fa' ? tp.fa : tp.en}</button>
+        ))}
+        <button className="btn small" disabled={busy} onClick={() => void load(topic)}>⟳ {t('refresh', lang)}</button>
+      </div>
+      <Panel title={`${t('news', lang)} — ${(NEWS_TOPICS.find(x => x.key === topic) as any)[lang]}`}>
+        {busy && <div className="empty">{t('newsLoading', lang)}</div>}
+        {err && !busy && <div className="of-row warn">{t('newsFail', lang)}</div>}
+        {!busy && !err && items && !items.length && <div className="empty">{t('noData', lang)}</div>}
+        {!busy && items && items.map((n, i) => (
+          <a key={i} className="news-row" href={n.link} target="_blank" rel="noopener noreferrer">
+            <div className="news-meta"><span className="news-src">{n.source}</span><span>{ago(n.ts, lang)}</span></div>
+            <div className="news-title">{n.title}</div>
+          </a>
+        ))}
+      </Panel>
+      <div className="small muted note">{t('newsNote', lang)}</div>
     </div>
   );
 }
