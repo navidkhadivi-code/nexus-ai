@@ -96,11 +96,12 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
   grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
   grid-template-areas: 'chart consensus' 'agents book' 'port port';
 }
+.grid-dash > * { min-width: 0; }
 .g-chart { grid-area: chart; } .g-consensus { grid-area: consensus; }
 .g-agents { grid-area: agents; } .g-book { grid-area: book; } .g-port { grid-area: port; }
 .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 900px) {
-  .grid-dash { grid-template-columns: 1fr; grid-template-areas: 'chart' 'consensus' 'agents' 'book' 'port'; }
+  .grid-dash { grid-template-columns: 1fr; grid-template-areas: 'consensus' 'chart' 'agents' 'book' 'port'; }
   .grid-two { grid-template-columns: 1fr; }
   .ai-screen { grid-template-columns: 1fr; }
 }
@@ -140,8 +141,9 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
   @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
   .side-foot { display: none; }
   .main { padding: 8px; }
-  .chart-host { height: 290px; }
-  .panel-b { overflow-x: auto; }
+  .chart-host { height: 260px; }
+  .panel-b { padding: 10px; overflow-x: auto; }
+  .panel-h { padding: 8px 10px; font-size: 10px; }
   .tbl { min-width: 540px; }
   .tf-table { max-width: 100%; }
   .mt-row { gap: 8px; }
