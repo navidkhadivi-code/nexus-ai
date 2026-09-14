@@ -418,6 +418,7 @@ function makeHandlers(set: SetPartial, get: () => State) {
     onStatus: (s: ConnState, d?: string) => set(st => ({ conn: s, connDetail: d ?? '', health: { ...st.health, ws: s, wsDetail: d ?? '' } })),
     onTick: (t: Tick) => {
       set(st => ({ tick: t, health: { ...st.health, marketLatencyMs: Math.max(0, t.recv - t.ts) } }));
+      if (!get().consensus) void refreshAnalysis(set, get); // first quote → immediate analysis
       tickSignal(get, set);
       markPaper(get, set);
     },

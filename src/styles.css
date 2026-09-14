@@ -110,7 +110,6 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 @media (max-width: 1024px) {
   .sidebar { width: 138px; }
   .chart-host { height: 380px; }
-  .grid-dash { grid-template-columns: minmax(0, 1.5fr) minmax(250px, 1fr); }
   .brand-sub { display: none; }
 }
 
@@ -132,8 +131,9 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
   .body { flex-direction: column; }
   .sidebar {
     width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-shrink: 0; gap: 4px;
-    padding: 6px 8px; border-inline-end: none; border-bottom: 1px solid var(--line2);
+    padding: 6px 8px; border-inline-end: none; border-bottom: 1px solid var(--line2); scrollbar-width: thin;
   }
+  .sidebar::-webkit-scrollbar { height: 3px; }
   .nav { white-space: nowrap; flex-shrink: 0; padding: 8px 12px; font-size: 12px; position: relative; }
   button, a, .chip, .pref { touch-action: manipulation; }
   .nav.active { border-inline-start: none; border-bottom: 2px solid var(--blue); background: #4f8cff1a; border-radius: 8px 8px 0 0; }
