@@ -16,6 +16,7 @@ export class MarketGateway {
   private staleTimer: number | null = null;
   private pingTimer: number | null = null;
   private closed = false;
+  private gen = 0; // socket generation: frames from a superseded socket are dropped
   lastMsgAt = 0;
   seq = 0;
 
@@ -23,6 +24,7 @@ export class MarketGateway {
 
   start() {
     this.closed = false;
+    this.gen++;
     this.adapter.resetState();
     this.connect();
   }
@@ -42,6 +44,7 @@ export class MarketGateway {
 
   private connect() {
     if (this.closed) return;
+    const myGen = this.gen;
     this.h.onStatus('CONNECTING', this.adapter.id);
     const setup = this.adapter.wsSetup(this.symbol, this.tf);
     try {
@@ -52,6 +55,7 @@ export class MarketGateway {
       return;
     }
     this.ws.onopen = () => {
+      if (myGen !== this.gen) return;
       this.lastMsgAt = Date.now();
       this.h.onStatus('LIVE', this.adapter.id);
       for (const sub of setup.subscribe ?? []) this.ws?.send(sub);
@@ -61,6 +65,7 @@ export class MarketGateway {
       }
     };
     this.ws.onmessage = (ev) => {
+      if (myGen !== this.gen) return; // stale socket after symbol switch → drop
       this.lastMsgAt = Date.now();
       this.seq++;
       const e = this.adapter.parseWs(String(ev.data));
@@ -70,8 +75,8 @@ export class MarketGateway {
       if (e.trade) this.h.onTrade(e.trade);
       if (e.candle) this.h.onCandle(e.candle.c, e.candle.final);
     };
-    this.ws.onclose = () => { if (!this.closed) { this.h.onStatus('OFFLINE'); this.scheduleReconnect(); } };
-    this.ws.onerror = () => this.h.onStatus('ERROR');
+    this.ws.onclose = () => { if (myGen === this.gen && !this.closed) { this.h.onStatus('OFFLINE'); this.scheduleReconnect(); } };
+    this.ws.onerror = () => { if (myGen === this.gen) this.h.onStatus('ERROR'); };
 
     if (this.staleTimer) clearInterval(this.staleTimer);
     this.staleTimer = window.setInterval(() => {

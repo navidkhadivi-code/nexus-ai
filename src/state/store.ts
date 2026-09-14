@@ -260,13 +260,13 @@ export const useStore = create<State>((set, get) => ({
 
   setSymbol: (s) => {
     const sym = s.toUpperCase();
-    set({ symbol: sym, candles: [], consensus: null, ares: null, signal: null, error: null });
+    set({ symbol: sym, candles: [], tick: null, book: null, bookMetrics: null, consensus: null, ares: null, liquidity: null, gann: null, signal: null, error: null });
     gateway?.reconfigure(currentAdapter, sym, get().timeframe);
     void loadSymbolData(set, get);
   },
 
   setTimeframe: (t) => {
-    set({ timeframe: t, candles: [] });
+    set({ timeframe: t, candles: [], consensus: null, ares: null, signal: null });
     gateway?.reconfigure(currentAdapter, get().symbol, t);
     void loadSymbolData(set, get);
   },
@@ -395,6 +395,7 @@ async function loadSymbolData(set: SetPartial, get: () => State) {
       currentAdapter.fetchRecentTrades(symbol, 600),
       currentAdapter.fetchFunding(symbol),
     ]);
+    if (get().symbol !== symbol || get().timeframe !== timeframe) return; // user switched again → drop stale response
     ofEngine.reset();
     for (const t of trades) ofEngine.pushTrade(t);
     mtfCache[timeframe] = candles;
@@ -404,11 +405,11 @@ async function loadSymbolData(set: SetPartial, get: () => State) {
       error: null,
     });
     for (const tf of ['5m', '1h', '4h', '1d'] as Timeframe[]) {
-      if (tf !== timeframe) currentAdapter.fetchCandles(symbol, tf, 300).then(cs => { mtfCache[tf] = cs; }).catch(() => undefined);
+      if (tf !== timeframe) currentAdapter.fetchCandles(symbol, tf, 300).then(cs => { if (get().symbol === symbol) mtfCache[tf] = cs; }).catch(() => undefined);
     }
     void refreshAnalysis(set, get);
   } catch (e) {
-    set({ error: String(e) });
+    if (get().symbol === symbol) set({ error: String(e) });
   }
 }
 
@@ -474,7 +475,7 @@ let sigSeq = 0;
 function tickSignal(get: () => State, set: SetPartial) {
   const st = get();
   const sig = st.signal;
-  if (!sig || !st.tick) return;
+  if (!sig || !st.tick || sig.symbol !== st.symbol) return; // never evaluate a BTC signal on XRP prices
   const px = st.tick.price;
   let changed = false;
   const s = { ...sig };
