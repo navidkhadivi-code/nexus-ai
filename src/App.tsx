@@ -168,16 +168,21 @@ function GeoNotice({ lang }: any) {
   const [country, setCountry] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/geo.php', { credentials: 'same-origin' })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(j => setCountry(String(j.ok ? j.country || 'X' : '').toUpperCase()))
-      .catch(() => {
-        // fallback: browser-side check
-        fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
-          .then(r => r.ok ? r.json() : Promise.reject())
-          .then(j => setCountry(String(j.country_code || '').toUpperCase()))
-          .catch(() => setCountry(''));
-      });
+    let stop = false;
+    const check = () => {
+      fetch('/api/geo.php?_=' + Date.now(), { credentials: 'same-origin', cache: 'no-store' })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(j => { if (!stop) setCountry(String(j.ok ? j.country || 'X' : '').toUpperCase()); })
+        .catch(() => {
+          fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(j => { if (!stop) setCountry(String(j.country_code || '').toUpperCase()); })
+            .catch(() => { if (!stop) setCountry(''); });
+        });
+    };
+    check();
+    const id = window.setInterval(check, 60000); // silent IP re-check every minute
+    return () => { stop = true; clearInterval(id); };
   }, []);
 
   const isIR = country === 'IR';
