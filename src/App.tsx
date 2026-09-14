@@ -769,15 +769,49 @@ const GUIDE: { icon: string; t: { en: string; fa: string }; b: { en: string[]; f
 
 function GuideScreen({ lang }: any) {
   const L = lang as 'en' | 'fa';
+  const [open, setOpen] = useState<number | null>(null);
+  const nn = (i: number) => String(i + 1).padStart(2, '0');
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, []);
+
+  const viewAll = () => {
+    setOpen(null);
+    setTimeout(() => document.getElementById('guide-all')?.scrollIntoView({ behavior: 'smooth' }), 60);
+  };
+
   return (
     <div className="guide-wrap2">
       <div className="guide-toc">
-        {GUIDE.map((g, i) => <a key={i} href={'#g' + i} className="toc-chip"><b>{String(i + 1).padStart(2, '0')}</b>{g.t[L]}</a>)}
+        {GUIDE.map((g, i) => <button key={i} className="toc-chip" onClick={() => setOpen(i)}><b>{nn(i)}</b>{g.t[L]}</button>)}
+        <button className="toc-chip all" onClick={viewAll}>📚 {L === 'fa' ? 'مشاهده کل آموزش' : 'VIEW FULL GUIDE'}</button>
       </div>
-      <div className="guide-grid">
+
+      {open != null && (
+        <div className="g-modal-bg" onClick={() => setOpen(null)}>
+          <div className="g-modal" onClick={e => e.stopPropagation()}>
+            <div className="g-modal-h">
+              <span className="g-num">{nn(open)}</span>
+              <b>{GUIDE[open].icon} {GUIDE[open].t[L]}</b>
+              <button className="g-close" onClick={() => setOpen(null)} aria-label="close">✕</button>
+            </div>
+            <ul className="g-modal-list">{GUIDE[open].b[L].map((line, j) => <li key={j}>{line}</li>)}</ul>
+            <div className="g-modal-foot">
+              <button className="btn sm" disabled={open === 0} onClick={() => setOpen(open - 1)}>← {L === 'fa' ? 'قبلی' : 'PREV'}</button>
+              <button className="btn sm" onClick={viewAll}>📚 {L === 'fa' ? 'کل آموزش' : 'FULL GUIDE'}</button>
+              <button className="btn sm" disabled={open >= GUIDE.length - 1} onClick={() => setOpen(open + 1)}>{L === 'fa' ? 'بعدی' : 'NEXT'} →</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div id="guide-all" className="guide-grid">
         {GUIDE.map((g, i) => (
-          <section key={i} id={'g' + i} className="panel guide-card">
-            <div className="panel-h"><span className="g-num">{String(i + 1).padStart(2, '0')}</span>{g.icon} {g.t[L]}</div>
+          <section key={i} className="panel guide-card" onClick={() => setOpen(i)} style={{ cursor: 'pointer' }}>
+            <div className="panel-h"><span className="g-num">{nn(i)}</span>{g.icon} {g.t[L]}</div>
             <div className="panel-b"><ul className="guide-list">{g.b[L].map((line, j) => <li key={j}>{line}</li>)}</ul></div>
           </section>
         ))}
