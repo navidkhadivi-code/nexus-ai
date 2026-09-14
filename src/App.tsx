@@ -197,6 +197,7 @@ function Terminal({ s, lang }: any) {
 
   return (
     <div className="app">
+      <GeoNotice lang={lang} />
       <header className="topbar">
         <div className="brand">
           <img src="./logo.png" alt="" className="logo-img" />
@@ -232,7 +233,6 @@ function Terminal({ s, lang }: any) {
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
         </div>
       </header>
-      <GeoNotice lang={lang} />
 
       <div className="body">
         <nav className="sidebar">

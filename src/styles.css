@@ -391,7 +391,7 @@ html[data-theme='light'] .login-card { box-shadow: 0 20px 60px rgba(16,24,40,.12
 html[data-theme='light'] .guide-toc { background: var(--bg); }
 
 /* geo notice */
-.geo-bar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 7px 16px; font-size: 12.5px; line-height: 1.7; text-align: center; flex-wrap: wrap; }
+.geo-bar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 7px 16px; font-size: 12.5px; line-height: 1.7; text-align: center; flex-wrap: wrap; flex-shrink: 0; width: 100%; }
 .geo-bar.hint { background: #4f8cff14; color: #9db8e8; border-bottom: 1px solid #4f8cff33; }
 .geo-bar.warn { background: #ffb34718; color: var(--amber); border-bottom: 1px solid #ffb34755; font-weight: 700; }
 .geo-bar.ok { background: #0ecb8112; color: var(--up); border-bottom: 1px solid #0ecb8133; }
