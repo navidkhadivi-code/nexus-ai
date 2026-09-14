@@ -101,6 +101,7 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 900px) {
   .grid-dash { grid-template-columns: 1fr; grid-template-areas: 'chart' 'consensus' 'agents' 'book' 'port'; }
+  .grid-two { grid-template-columns: 1fr; }
   .ai-screen { grid-template-columns: 1fr; }
 }
 
@@ -114,14 +115,22 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 
 /* ---------- mobile ---------- */
 @media (max-width: 760px) {
-  .topbar { padding: 6px 10px; gap: 8px; }
+  .topbar { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 6px 10px; }
+  .brand { grid-row: 1; grid-column: 1; }
+  .top-right { grid-row: 1; grid-column: 2; justify-self: end; gap: 6px; }
+  .ticker { grid-row: 2; grid-column: 1 / -1; gap: 8px; }
+  .brand-name { font-size: 13px; }
+  .sym-sel { padding: 4px 6px; font-size: 12px; }
+  .conn { font-size: 9px; padding: 2px 7px; }
+  .mode-badge { font-size: 9px; padding: 3px 7px; }
+  .inp, input[type='number'], input[type='text'], input[type='email'], input[type='password'], select { font-size: 16px; } /* iOS no auto-zoom */
+  .btn { min-height: 40px; }
   .logo-img { height: 28px; }
   .big-price { font-size: 17px; }
   .meta, .user-badge { display: none; }
-  .top-right { gap: 6px; }
   .body { flex-direction: column; }
   .sidebar {
-    width: 100%; flex-direction: row; overflow-x: auto; flex-shrink: 0; gap: 4px;
+    width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-shrink: 0; gap: 4px;
     padding: 6px 8px; border-inline-end: none; border-bottom: 1px solid var(--line2);
   }
   .nav { white-space: nowrap; flex-shrink: 0; padding: 8px 12px; font-size: 12px; position: relative; }
