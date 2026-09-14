@@ -82,7 +82,7 @@ function LoginScreen({ s, lang }: any) {
         <button className="btn primary" disabled={busy || !u || p.length < 8}>{busy ? '…' : s.auth.setupRequired ? t('createAdmin', lang) : t('login', lang)}</button>
         <div className="small muted">{t('plansInfo', lang)}</div>
         <div className="row-gap" style={{ justifyContent: 'center', marginTop: 0 }}>
-          <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer">✈️ {t('adminContact', lang)}</a>
+          <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer"><img src="./telegram.svg" className="tg-ic" alt="" /> {t('adminContact', lang)}</a>
           <a className="tg-link" href="mailto:trade@ipeset.com">✉️ trade@ipeset.com</a>
         </div>
       </form>
@@ -229,7 +229,7 @@ function Terminal({ s, lang }: any) {
       <footer className="statusbar">
         <span>{t('paperNote', lang)}</span>
         <span>{t('welcome', lang)}</span>
-        <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer">✈️ @persiantrade2025</a>
+        <a className="tg-link" href="https://t.me/persiantrade2025" target="_blank" rel="noopener noreferrer"><img src="./telegram.svg" className="tg-ic" alt="" /> @persiantrade2025</a>
         <a className="tg-link" href="mailto:trade@ipeset.com">✉️ trade@ipeset.com</a>
         <span className="mono">engine {s.health.engineMs}ms · up {Math.floor(s.health.uptimeSec / 60)}m</span>
       </footer>
