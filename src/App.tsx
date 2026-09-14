@@ -143,6 +143,36 @@ function RequestPanel({ lang }: any) {
   );
 }
 
+function GeoNotice({ lang }: any) {
+  const [country, setCountry] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(() => { try { return sessionStorage.getItem('geo_dismissed') === '1'; } catch { return false; } });
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(j => setCountry(String(j.country_code || '').toUpperCase()))
+      .catch(() => setCountry(''));
+  }, []);
+
+  if (hidden) return null;
+  const isIR = country === 'IR';
+  const isForeign = country && !isIR;
+  if (isForeign) {
+    return (
+      <div className="geo-bar ok">
+        <span>{t('geoOk', lang)}</span>
+        <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
+      </div>
+    );
+  }
+  return (
+    <div className={`geo-bar ${isIR ? 'warn' : 'hint'}`}>
+      <span>{isIR ? t('geoIranWarn', lang) : t('geoHint', lang)}</span>
+      <button onClick={() => { try { sessionStorage.setItem('geo_dismissed', '1'); } catch { /* */ } setHidden(true); }}>{t('geoDismiss', lang)}</button>
+    </div>
+  );
+}
+
 function Terminal({ s, lang }: any) {
   const [screen, setScreen] = useState<Screen>('dashboard');
   const [prefs, setPrefs] = useState<ChartPrefs>({ ema20: true, ema50: true, bb: false, vwap: true, bos: true, liquidity: true, fvg: true, ob: true, gann: false });
@@ -200,6 +230,7 @@ function Terminal({ s, lang }: any) {
           <button className="lang-btn" onClick={() => s.setLocale(lang === 'en' ? 'fa' : 'en')}>{lang === 'en' ? 'فارسی' : 'EN'}</button>
         </div>
       </header>
+      <GeoNotice lang={lang} />
 
       <div className="body">
         <nav className="sidebar">

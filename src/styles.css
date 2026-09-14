@@ -375,6 +375,15 @@ html[data-theme='light'] .btn.primary { box-shadow: 0 4px 14px rgba(37,99,235,.2
 html[data-theme='light'] .topbar { box-shadow: 0 1px 0 #e3e8f0, 0 4px 16px rgba(16,24,40,.05); }
 html[data-theme='light'] .login-card { box-shadow: 0 20px 60px rgba(16,24,40,.12); }
 html[data-theme='light'] .guide-toc { background: var(--bg); }
+
+/* geo notice */
+.geo-bar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 7px 16px; font-size: 12.5px; line-height: 1.7; text-align: center; flex-wrap: wrap; }
+.geo-bar.hint { background: #4f8cff14; color: #9db8e8; border-bottom: 1px solid #4f8cff33; }
+.geo-bar.warn { background: #ffb34718; color: var(--amber); border-bottom: 1px solid #ffb34755; font-weight: 700; }
+.geo-bar.ok { background: #0ecb8112; color: var(--up); border-bottom: 1px solid #0ecb8133; }
+html[data-theme='light'] .geo-bar.hint { color: #2c4a7c; }
+.geo-bar button { background: none; border: 1px solid currentColor; color: inherit; border-radius: 6px; font-size: 10px; padding: 2px 9px; cursor: pointer; opacity: .75; font-family: inherit; }
+.geo-bar button:hover { opacity: 1; }
 .inp { background: var(--bg2); border: 1px solid var(--line2); color: var(--text); border-radius: 7px; padding: 9px 11px; font-family: inherit; font-size: 13px; }
 .inp:focus { outline: none; border-color: #4f8cff88; }
 .admin-grid { display: flex; flex-direction: column; gap: 14px; }
