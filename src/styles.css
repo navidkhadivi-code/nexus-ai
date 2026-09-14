@@ -201,6 +201,7 @@ html[dir='rtl'] body { font-family: 'Vazirmatn', 'IBM Plex Mono', Tahoma, sans-s
 .set-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
 .set-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid var(--line2); border-radius: 7px; padding: 8px 11px; font-size: 12px; }
 .set-row input { width: 90px; background: var(--bg2); border: 1px solid var(--line2); color: var(--text); border-radius: 5px; padding: 5px 8px; font-family: inherit; }
+.save-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .inp { background: var(--bg2); border: 1px solid var(--line2); color: var(--text); border-radius: 7px; padding: 9px 11px; font-family: inherit; font-size: 13px; }
 .inp:focus { outline: none; border-color: #4f8cff88; }
 .admin-grid { display: flex; flex-direction: column; gap: 14px; }

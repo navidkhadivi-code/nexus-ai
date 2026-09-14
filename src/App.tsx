@@ -846,7 +846,18 @@ function JournalScreen({ s, lang }: any) {
   );
 }
 
+const RISK_FIELDS: [string, string][] = [
+  ['riskPct', 'risk'], ['maxRiskPct', 'Max risk %'], ['maxDailyLossPct', 'Max daily loss %'],
+  ['maxExposurePct', 'Max exposure %'], ['maxLeverage', 'Max leverage'], ['minRR', 'Min R/R'], ['minConfidence', 'conf % min'],
+];
+
 function SettingsScreen({ s, lang }: any) {
+  const [draft, setDraft] = useState<Record<string, number>>(() => ({ ...s.risk }));
+  const [saved, setSaved] = useState(false);
+  const dirty = RISK_FIELDS.some(([k]) => Number(draft[k]) !== Number(s.risk[k]));
+  const save = () => { s.saveRisk(draft); setSaved(true); setTimeout(() => setSaved(false), 2500); };
+  const revert = () => setDraft({ ...s.risk });
+
   return (
     <Panel title={t('settings', lang)}>
       <div className="set-row" style={{ marginBottom: 12 }}>
@@ -858,18 +869,22 @@ function SettingsScreen({ s, lang }: any) {
           <option value="OKX">OKX</option>
         </select>
         <b className="up">{s.activeSource}</b>
+        <span className="small muted">{t('autoSaved', lang)}</span>
       </div>
       <div className="set-grid">
-        {([
-          ['riskPct', t('risk', lang) + ' %'], ['maxRiskPct', 'Max risk %'], ['maxDailyLossPct', 'Max daily loss %'],
-          ['maxExposurePct', 'Max exposure %'], ['maxLeverage', 'Max leverage'], ['minRR', 'Min R/R'], ['minConfidence', t('confidence', lang) + ' % min'],
-        ] as [string, string][]).map(([k, label]) => (
-          <label key={k} className="set-row"><span>{label}</span>
-            <input type="number" step="0.1" value={(s.risk as any)[k]} onChange={e => s.setRisk({ [k]: +e.target.value })} />
+        {RISK_FIELDS.map(([k, label]) => (
+          <label key={k} className="set-row"><span>{k === 'riskPct' ? t('risk', lang) + ' %' : k === 'minConfidence' ? t('confidence', lang) + ' % ' + (lang === 'fa' ? 'حداقل' : 'min') : label}</span>
+            <input type="number" step="0.1" value={draft[k] ?? ''} onChange={e => setDraft(d => ({ ...d, [k]: +e.target.value }))} />
           </label>
         ))}
       </div>
-      <div className="small muted note">Stored locally (this browser). Server-side multi-user auth requires the VPS deployment (see README).</div>
+      <div className="save-row">
+        <button className="btn primary" disabled={!dirty} onClick={save}>💾 {t('saveSettings', lang)}</button>
+        {dirty && <button className="btn" onClick={revert}>{t('revert', lang)}</button>}
+        {dirty && <span className="small" style={{ color: 'var(--amber)' }}>● {t('unsaved', lang)}</span>}
+        {saved && <span className="small" style={{ color: 'var(--up)' }}>✓ {t('saved', lang)}</span>}
+      </div>
+      <div className="small muted note">{t('settingsPersistNote', lang)}</div>
       <button className="btn danger" onClick={() => { if (confirm('Reset paper account?')) s.resetPaper(); }}>Reset Paper Account</button>
     </Panel>
   );

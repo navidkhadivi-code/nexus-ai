@@ -124,6 +124,7 @@ interface State {
   setExchange: (e: ExchangePref) => void;
   setLocale: (l: 'en' | 'fa') => void;
   setRisk: (r: Partial<RiskConfig>) => void;
+  saveRisk: (r: Partial<RiskConfig>) => void;
   openPaperTrade: () => { ok: boolean; reason?: string };
   openManualTrade: (side: 'LONG' | 'SHORT', qty: number, sl: number, tp: number[]) => { ok: boolean; reason?: string };
   closePaperTrade: (id: string) => void;
@@ -137,6 +138,16 @@ type SetPartial = (p: Partial<State> | ((st: State) => Partial<State>)) => void;
 const ADAPTERS: Record<string, ExchangeAdapter> = { BINANCE: binanceAdapter, BYBIT: bybitAdapter, OKX: okxAdapter };
 const savedLocale: 'en' | 'fa' = (() => { try { return (localStorage.getItem('nexus_locale') === 'en' ? 'en' : 'fa'); } catch { return 'fa'; } })();
 try { document.documentElement.lang = savedLocale; document.documentElement.dir = savedLocale === 'fa' ? 'rtl' : 'ltr'; } catch { /* pre-DOM */ }
+
+const DEFAULT_RISK: RiskConfig = { balance: 10000, riskPct: 0.5, maxRiskPct: 1.5, maxDailyLossPct: 5, maxExposurePct: 60, maxLeverage: 5, minRR: 1.3, minConfidence: 55, dailyLossUsd: 0, openExposureUsd: 0 };
+function loadRisk(): RiskConfig {
+  try { const s = JSON.parse(localStorage.getItem('nexus_risk_v1') || 'null'); if (s && typeof s === 'object') return { ...DEFAULT_RISK, ...s }; } catch { /* fresh */ }
+  return { ...DEFAULT_RISK };
+}
+function loadExchange(): ExchangePref {
+  try { const e = localStorage.getItem('nexus_exchange'); if (e === 'BINANCE' || e === 'BYBIT' || e === 'OKX' || e === 'AUTO') return e; } catch { /* default */ }
+  return 'AUTO';
+}
 const ofEngine = new OrderFlowEngine();
 let gateway: MarketGateway | null = null;
 let currentAdapter: ExchangeAdapter = binanceAdapter;
@@ -197,7 +208,7 @@ export const useStore = create<State>((set, get) => ({
 
   symbol: 'BTCUSDT',
   timeframe: '15m',
-  exchange: 'AUTO',
+  exchange: loadExchange(),
   activeSource: 'â€”',
   locale: savedLocale,
   candles: [],
@@ -216,7 +227,7 @@ export const useStore = create<State>((set, get) => ({
   signalHistory: [],
   agentPerf: [],
   paper: loadAccount(),
-  risk: { balance: 10000, riskPct: 0.5, maxRiskPct: 1.5, maxDailyLossPct: 5, maxExposurePct: 60, maxLeverage: 5, minRR: 1.3, minConfidence: 55, dailyLossUsd: 0, openExposureUsd: 0 },
+  risk: loadRisk(),
   health: { ws: 'CONNECTING', wsDetail: '', marketLatencyMs: 0, engineMs: 0, macroOk: false, storage: 'LOCAL', liveTrading: 'DISABLED_BY_DEFAULT', uptimeSec: 0 },
   bt: null,
   error: null,
@@ -256,6 +267,7 @@ export const useStore = create<State>((set, get) => ({
 
   setExchange: (pref) => {
     set({ exchange: pref, error: null });
+    try { localStorage.setItem('nexus_exchange', pref); } catch { /* noop */ }
     void (async () => {
       try {
         currentAdapter = await pickAdapter(pref);
@@ -275,6 +287,11 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setRisk: (r) => set(st => ({ risk: { ...st.risk, ...r } })),
+  saveRisk: (r) => {
+    const next = { ...get().risk, ...r };
+    set({ risk: next });
+    try { localStorage.setItem('nexus_risk_v1', JSON.stringify(next)); } catch { /* quota */ }
+  },
 
   openPaperTrade: () => {
     const { paper, tick, consensus, ares, symbol } = get();
