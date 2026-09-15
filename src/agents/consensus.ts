@@ -42,7 +42,7 @@ export function runConsensus(ctx: AgentContext, mtfCandles: Record<string, Agent
   const directionalScore = (score / (weightSum || 1)) * 100;
   const direction: Direction = directionalScore > 18 ? 'LONG' : directionalScore < -18 ? 'SHORT' : 'NEUTRAL';
   const agreePct = dirCount ? (agreeDir / dirCount) * 100 : 0;
-  const confidence = Math.min(100, Math.abs(directionalScore) * (0.5 + 0.5 * (agreePct / 100)));
+  let confidence = Math.min(100, Math.abs(directionalScore) * (0.5 + 0.5 * (agreePct / 100)));
 
   // multi-timeframe analysis
   const mtf: ConsensusResult['mtf'] = {};
@@ -56,6 +56,19 @@ export function runConsensus(ctx: AgentContext, mtfCandles: Record<string, Agent
     if (st.trend === 'BULL' && e20 && e50 && px > e20) d = 'LONG';
     else if (st.trend === 'BEAR' && e20 && e50 && px < e20) d = 'SHORT';
     mtf[tf] = { trend: st.regime, direction: d, confidence: d === 'NEUTRAL' ? 50 : 60 + Math.min(30, Math.abs(directionalScore) / 3) };
+  }
+
+  // higher-timeframe modifier: 4H/1D alignment boosts conviction, conflict penalizes it (conflicts stay visible in mtf panel)
+  const bias = (tf: string, w: number): number => {
+    const d = mtf[tf]?.direction;
+    if (!d || d === 'NEUTRAL' || direction === 'NEUTRAL') return 0;
+    return d === direction ? w : -w * 1.6;
+  };
+  const mtfAdj = bias('4h', 6) + bias('1d', 5);
+  if (mtfAdj !== 0) {
+    confidence = Math.max(0, Math.min(100, confidence + mtfAdj));
+    if (mtfAdj < 0) risks.push(`Higher-TF conflict (4H/1D) reduced confidence by ${Math.abs(mtfAdj)}`);
+    if (mtfAdj > 0) reasons.push('Higher-TF (4H/1D) alignment boosts this view');
   }
 
   // NO TRADE engine — first-class state

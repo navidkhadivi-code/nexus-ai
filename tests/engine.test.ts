@@ -5,7 +5,7 @@ import { correlation, analyzeQuant } from '../src/engine/quant';
 import { analyzeLiquidity } from '../src/engine/liquidity';
 import { analyzeGann } from '../src/engine/gann';
 import { backtest, monteCarlo, computeMetrics } from '../src/engine/backtest';
-import { aresEvaluate, type RiskConfig, type AgentContext } from '../src/agents/agents';
+import { aresEvaluate, rsiDivergence, agentQuant, type RiskConfig, type AgentContext } from '../src/agents/agents';
 import { runConsensus } from '../src/agents/consensus';
 import { loadAccount, openPosition, closePosition, managePositions } from '../src/paper/engine';
 import type { Candle, OrderBook } from '../src/api/types';
@@ -171,6 +171,49 @@ console.log('\n== CRITICAL: live trading remains DISABLED ==');
   // Live engine is not wired at all on this deployment; only paper mode exists.
   check('paper engine marks mode=PAPER only', true, '');
   check('no withdrawal/order code exists in bundle', !require('fs').readFileSync('src/paper/engine.ts', 'utf8').match(/withdraw/i), '');
+}
+
+console.log('\n== pro indicators: divergence, mean-reversion, MTF ==');
+{
+  // bearish divergence: price higher high, RSI lower high
+  const candles = Array.from({ length: 40 }, (_, i) => ({ t: i, o: 100, h: 100, l: 100, c: i < 10 ? 100 : i < 30 ? 102 : 105, v: 1, q: 1 }));
+  const rs: (number | null)[] = Array.from({ length: 40 }, (_, i) => (i < 10 ? 50 : i < 20 ? 75 : 60));
+  check('RSI bearish divergence detected', rsiDivergence(candles, rs) === 'BEAR', String(rsiDivergence(candles, rs)));
+  check('no divergence on flat rsi', rsiDivergence(candles, Array(40).fill(55)) === null, '');
+  // QUANT mean reversion in ranging regime
+  const qctx: any = {
+    symbol: 'T', timeframe: '15m', candles: [], mtf: {}, price: 100,
+    structure: { regime: 'RANGING', trend: 'NEUTRAL', bos: [], choch: [], support: [], resistance: [], swings: [] },
+    liquidity: {}, orderflow: {}, gann: null,
+    quant: { returns1h: 0, volAnn: 0.4, atrPct: 1, zscore: 3.1, mom20: 0.01, mom60: 0, trendStrength: 0.1, skew: 0, kurtosis: 0, expectancyR: 0, probUp: 0.5, regime: 'RANGE' },
+    macro: null, funding: null, book: null, dataFresh: true, st: { rsi: [], macdHist: [], ema20: [], ema50: [] },
+  };
+  const qa = agentQuant(qctx);
+  check('QUANT fades +3.1 z-score in range (SHORT)', qa.direction === 'SHORT' && qa.reasons.some(r => r.includes('Mean-reversion')), qa.direction);
+  // MTF conflict penalty: same agent votes, but 1h/4h/1d opposite → confidence lower than aligned
+  const mk = (tfDir: 'LONG' | 'SHORT' | 'NEUTRAL') => {
+    // zigzag with drift so fractal pivots exist (monotonic series has no swings)
+    const cs = Array.from({ length: 160 }, (_, i) => {
+      const drift = tfDir === 'LONG' ? i * 0.5 : tfDir === 'SHORT' ? -i * 0.5 : 0;
+      const base = (tfDir === 'SHORT' ? 200 : 100) + drift + Math.sin(i / 2) * 1.6;
+      return { t: 1700000000000 + i * 900000, o: base, h: base * 1.002, l: base * 0.998, c: base, v: 10, q: base * 10 };
+    });
+    return cs;
+  };
+  const up = mk('LONG');
+  const baseCtx: any = {
+    symbol: 'T', timeframe: '15m', candles: up, mtf: {}, price: up[up.length - 1].c,
+    structure: { regime: 'TRENDING_UP', trend: 'BULL', bos: [{ type: 'BULL_BOS', at: Date.now(), price: 1, idx: 1 }], choch: [], support: [], resistance: [], swings: [] },
+    liquidity: { equalHighs: [], equalLows: [], sweeps: [], orderBlocks: [], fvgs: [], above: [], below: [], nearestAbove: null, nearestBelow: null, hvn: [], lvn: [], poc: null, sweepProbAbove: 0, sweepProbBelow: 0 },
+    orderflow: { buyVol: 100, sellVol: 40, delta: 60, cvd: 60, cvdSlope: 0.5, imbalanceRatio: 2.5, absorption: 'NONE', exhaustion: 'NONE', pressure: 'BUYING', bookImbalance: 0.3, largeOrders: 0, spoofWarning: null },
+    gann: null, quant: { returns1h: 0.01, volAnn: 0.6, atrPct: 1, zscore: 0.5, mom20: 0.05, mom60: 0.1, trendStrength: 0.5, skew: 0, kurtosis: 0, expectancyR: 0.3, probUp: 0.6, regime: 'TREND_UP' },
+    macro: null, funding: null, book: null, dataFresh: true,
+    st: { rsi: [], macdHist: [], ema20: [], ema50: [] },
+  };
+  const aligned = runConsensus(baseCtx, { '4h': mk('LONG'), '1d': mk('LONG') });
+  const conflict = runConsensus(baseCtx, { '4h': mk('SHORT'), '1d': mk('SHORT') });
+  check('MTF alignment boosts confidence', aligned.confidence > conflict.confidence + 5, `${aligned.confidence.toFixed(0)} vs ${conflict.confidence.toFixed(0)}`);
+  check('MTF conflict adds risk note', conflict.summaryRisks.some(r => r.includes('Higher-TF conflict')), '');
 }
 
 console.log(`\nRESULT: ${pass} passed, ${fail} failed`);

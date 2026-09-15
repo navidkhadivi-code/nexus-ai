@@ -43,7 +43,7 @@ export interface AgentContext {
   book: OrderBook | null;
   dataFresh: boolean;
   minConfidence?: number; // user floor from Settings (caps the internal NO-TRADE floor)
-  st: { rsi: (number | null)[]; macdHist: (number | null)[]; ema20: (number | null)[]; ema50: (number | null)[] };
+  st: { rsi: (number | null)[]; macdHist: (number | null)[]; ema20: (number | null)[]; ema50: (number | null)[]; adx?: (number | null)[]; vwap?: (number | null)[] };
 }
 
 const MV = 'nexus-rules-v1.0';
@@ -57,6 +57,25 @@ function base(c: AgentContext): Omit<AgentOutput, 'agent' | 'direction' | 'confi
 }
 
 function clamp(v: number, a = 0, b = 100) { return Math.max(a, Math.min(b, v)); }
+
+// Classic RSI divergence on a window: returns 'BEAR' | 'BULL' | null (deterministic pivot compare)
+export function rsiDivergence(candles: { c: number }[], rsiArr: (number | null)[]): 'BEAR' | 'BULL' | null {
+  if (candles.length < 20 || rsiArr.length < 20) return null;
+  const half = Math.floor(candles.length / 2);
+  const closes = candles.map(x => x.c);
+  const rs = rsiArr.map(v => v ?? NaN);
+  const maxClose = (a: number[]) => Math.max(...a);
+  const minClose = (a: number[]) => Math.min(...a);
+  const maxRsi = (a: (number | null)[]) => Math.max(...a.map(v => (v == null ? -Infinity : v)));
+  const minRsi = (a: (number | null)[]) => Math.min(...a.map(v => (v == null ? Infinity : v)));
+  const priceHH = maxClose(closes.slice(half)) > maxClose(closes.slice(0, half));
+  const rsiLH = maxRsi(rs.slice(half)) < maxRsi(rs.slice(0, half)) - 2;
+  const priceLL = minClose(closes.slice(half)) < minClose(closes.slice(0, half));
+  const rsiHL = minRsi(rs.slice(half)) > minRsi(rs.slice(0, half)) + 2;
+  if (priceHH && rsiLH) return 'BEAR';
+  if (priceLL && rsiHL) return 'BULL';
+  return null;
+}
 
 // NOVA — market structure
 export function agentNova(c: AgentContext): AgentOutput {
@@ -109,6 +128,31 @@ export function agentOrion(c: AgentContext): AgentOutput {
     if (c.price > e20 && e20 > e50) { score += 10; reasons.push('Price above EMA20 > EMA50'); }
     if (c.price < e20 && e20 < e50) { score -= 10; reasons.push('Price below EMA20 < EMA50'); }
   }
+  // ADX amplifies/damps the conviction (trend strength, non-directional)
+  const av = last(c.st.adx ?? []);
+  if (av != null && score !== 0) {
+    if (av > 25) { score = Math.round(score * 1.15); reasons.push(`ADX ${av.toFixed(0)} confirms trending market`); }
+    else if (av < 18) { score = Math.round(score * 0.7); risks.push(`ADX ${av.toFixed(0)} — weak trend, treat directional read cautiously`); }
+  }
+  // VWAP intraday bias
+  const vw = last(c.st.vwap ?? []);
+  if (vw) {
+    if (c.price > vw * 1.0005) { score += 8; reasons.push('Price above session VWAP'); }
+    else if (c.price < vw * 0.9995) { score -= 8; reasons.push('Price below session VWAP'); }
+  }
+  // MACD histogram slope (momentum acceleration)
+  const mhArr = c.st.macdHist;
+  if (mhArr.length >= 4) {
+    const cur = mhArr[mhArr.length - 1], prev = mhArr[mhArr.length - 4];
+    if (cur != null && prev != null) {
+      if (cur > prev + 1e-9) { score += 6; reasons.push('MACD histogram rising'); }
+      else if (cur < prev - 1e-9) { score -= 6; reasons.push('MACD histogram falling'); }
+    }
+  }
+  // RSI divergence over last 40 bars
+  const div = rsiDivergence(c.candles.slice(-40), (last(c.st.rsi) != null ? c.st.rsi.slice(-40) : []));
+  if (div === 'BEAR') { score -= 12; risks.push('RSI bearish divergence (price higher high, RSI lower high)'); }
+  if (div === 'BULL') { score += 12; reasons.push('RSI bullish divergence (price lower low, RSI higher low)'); }
   const dir: Direction = score > 12 ? 'LONG' : score < -12 ? 'SHORT' : 'NEUTRAL';
   return { ...base(c), agent: 'ORION', direction: dir, confidence: clamp(Math.abs(score) * 1.4), reasons, risks };
 }
@@ -127,6 +171,12 @@ export function agentLuma(c: AgentContext): AgentOutput {
   if (of.absorption === 'SELL_ABSORPTION') { score -= 12; reasons.push('Sell absorption at highs (passive supply)'); }
   if (of.exhaustion === 'BUY_EXHAUSTION') { score -= 8; risks.push('Buy exhaustion — late stage rally'); }
   if (of.exhaustion === 'SELL_EXHAUSTION') { score += 8; risks.push('Sell exhaustion — late stage decline'); }
+  // CVD vs price divergence: rally without buy support / drop without sell support
+  if (c.candles.length >= 25) {
+    const priceChg = c.price - c.candles[c.candles.length - 25].c;
+    if (priceChg > 0 && of.cvdSlope < -0.2) { score -= 12; risks.push('CVD divergence: price up but cumulative delta falling'); }
+    if (priceChg < 0 && of.cvdSlope > 0.2) { score += 12; reasons.push('CVD divergence: price down but cumulative delta rising'); }
+  }
   if (of.spoofWarning) risks.push('POSSIBLE SPOOFING detected in book — treat depth signals with caution');
   const dir: Direction = score > 12 ? 'LONG' : score < -12 ? 'SHORT' : 'NEUTRAL';
   return { ...base(c), agent: 'LUMA', direction: dir, confidence: clamp(Math.abs(score) * 2), reasons, risks };
@@ -215,6 +265,14 @@ export function agentQuant(c: AgentContext): AgentOutput {
   if (q.expectancyR < -0.15) { score -= 15; reasons.push(`Negative momentum-condition expectancy ${q.expectancyR.toFixed(2)}R`); }
   if (q.volAnn > 1.6) risks.push(`Annualized vol ${(q.volAnn * 100).toFixed(0)}% — elevated`);
   if (q.trendStrength > 0.4) reasons.push(`Trend efficiency ${q.trendStrength.toFixed(2)} (directional market)`);
+  // regime-aware: in ranging/low-vol markets fade z-score extremes instead of chasing momentum
+  const ranging = c.structure.regime === 'RANGING' || c.structure.regime === 'LOW_VOLATILITY';
+  if (ranging && Math.abs(q.zscore) > 2.2) {
+    if (q.zscore > 2.2) { score -= 18; reasons.push(`Mean-reversion: z-score +${q.zscore.toFixed(2)} in ranging market (historically reverts)`); }
+    else { score += 18; reasons.push(`Mean-reversion: z-score ${q.zscore.toFixed(2)} in ranging market (historically reverts)`); }
+  } else if (!ranging && Math.abs(q.zscore) > 2.8) {
+    risks.push(`Extreme z-score ${q.zscore.toFixed(2)} even for trend — stretch risk`);
+  }
   const dir: Direction = score > 12 ? 'LONG' : score < -12 ? 'SHORT' : 'NEUTRAL';
   return { ...base(c), agent: 'QUANT', direction: dir, confidence: clamp(Math.abs(score) * 1.8), reasons, risks };
 }

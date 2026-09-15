@@ -12,7 +12,7 @@ import { analyzeLiquidity } from '../engine/liquidity';
 import { analyzeGann } from '../engine/gann';
 import { analyzeQuant } from '../engine/quant';
 import { fetchMacro, type MacroResult } from '../engine/macro';
-import { ema, rsi, macd } from '../engine/indicators';
+import { ema, rsi, macd, adx, vwap } from '../engine/indicators';
 import { aresEvaluate, type AresDecision, type RiskConfig, type AgentContext } from '../agents/agents';
 import { runConsensus, type ConsensusResult } from '../agents/consensus';
 import { loadAccount, saveAccount, openPosition, closePosition, managePositions, uid, type PaperAccount } from '../paper/engine';
@@ -595,7 +595,7 @@ async function refreshAnalysis(set: SetPartial, get: () => State) {
       funding: st.funding ? { rate: st.funding.rate, openInterest: st.funding.openInterest } : null,
       book: st.book, dataFresh: st.conn === 'LIVE',
       minConfidence: st.risk.minConfidence,
-      st: { rsi: rsi(closes), macdHist: macd(closes).hist, ema20: ema(closes, 20), ema50: ema(closes, 50) },
+      st: { rsi: rsi(closes), macdHist: macd(closes).hist, ema20: ema(closes, 20), ema50: ema(closes, 50), adx: adx(st.candles), vwap: vwap(st.candles) },
     };
     const consensus = runConsensus(ctx, mtfCache);
     const risk: RiskConfig = {
